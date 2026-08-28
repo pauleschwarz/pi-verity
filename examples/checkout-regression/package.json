@@ -1,0 +1,6 @@
+{
+  "name": "pi-verity-checkout-regression",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test"}
+}

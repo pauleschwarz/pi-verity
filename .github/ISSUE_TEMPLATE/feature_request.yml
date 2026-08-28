@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a new proof mechanism or integration
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: failure
+    attributes:
+      label: Failure mode
+      description: What concrete error or missing evidence exists today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Proposed evidence
+      description: What independent evidence would the feature add?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Simpler alternatives considered
+      description: Why is another agent/reviewer or existing CI not sufficient?
+
+  - type: textarea
+    id: overhead
+    attributes:
+      label: Expected overhead
+      description: Runtime, dependencies, disk, network, context, or complexity.
+
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Design fit
+      options:
+        - label: The proposal does not require provider-specific proof semantics.
+          required: true
+        - label: The proposal can represent inconclusive evidence without calling it PASS.
+          required: true

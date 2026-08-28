@@ -1,0 +1,111 @@
+[
+  {
+    "name": "dependency added with task source",
+    "before": {
+      "package.json": "{\"dependencies\":{}}\n",
+      "src/date.ts": "const format = 1;\n"
+    },
+    "after": {
+      "package.json": "{\"dependencies\":{\"left-pad\":\"^1.3.0\"}}\n",
+      "src/date.ts": "const format = 2;\n"
+    },
+    "expected": { "code": "SCOPE_DEPENDENCY_ADDED", "severity": "WARNING", "file": "package.json" },
+    "taskTouched": ["src/date.ts"]
+  },
+  {
+    "name": "lockfile changed",
+    "before": { "yarn.lock": "pkg@1:\n  version 1\n" },
+    "after": { "yarn.lock": "pkg@1:\n  version 2\n" },
+    "expected": { "code": "SCOPE_LOCKFILE_CHANGED", "severity": "INFORMATION", "file": "yarn.lock" }
+  },
+  {
+    "name": "test file deleted",
+    "before": { "test/date.test.ts": "test('formats', () => {});\n" },
+    "after": {},
+    "expected": { "code": "SCOPE_TEST_DELETED", "severity": "FAIL", "file": "test/date.test.ts" }
+  },
+  {
+    "name": "test declaration deleted",
+    "before": { "tests/date.test.ts": "test('kept', () => {});\ntest('removed', () => {});\n" },
+    "after": { "tests/date.test.ts": "test('kept', () => {});\n" },
+    "expected": { "code": "SCOPE_TEST_DELETED", "severity": "FAIL", "file": "tests/date.test.ts" }
+  },
+  {
+    "name": "test skipped",
+    "before": { "test/date.test.ts": "test('formats', () => {});\n" },
+    "after": { "test/date.test.ts": "test.skip('formats', () => {});\n" },
+    "expected": { "code": "SCOPE_TEST_SKIPPED", "severity": "FAIL", "file": "test/date.test.ts" }
+  },
+  {
+    "name": "lint suppression added",
+    "before": { "src/date.ts": "const value = call();\n" },
+    "after": { "src/date.ts": "// eslint-disable-next-line no-undef\nconst value = call();\n" },
+    "expected": { "code": "SCOPE_LINT_SUPPRESSION_ADDED", "severity": "FAIL", "file": "src/date.ts" }
+  },
+  {
+    "name": "type suppression added",
+    "before": { "src/date.ts": "const value: string = call();\n" },
+    "after": { "src/date.ts": "// @ts-expect-error legacy\nconst value: string = call();\n" },
+    "expected": { "code": "SCOPE_TYPE_SUPPRESSION_ADDED", "severity": "FAIL", "file": "src/date.ts" }
+  },
+  {
+    "name": "generated output modified",
+    "before": { "dist/date.js": "const value = 1;\n" },
+    "after": { "dist/date.js": "const value = 2;\n" },
+    "expected": { "code": "SCOPE_GENERATED_FILE_MODIFIED", "severity": "WARNING", "file": "dist/date.js" }
+  },
+  {
+    "name": "build configuration modified",
+    "before": { "tsconfig.json": "{\"compilerOptions\":{\"strict\":true}}\n" },
+    "after": { "tsconfig.json": "{\"compilerOptions\":{\"strict\":false}}\n" },
+    "expected": { "code": "SCOPE_PACKAGE_BUILD_CONFIG_MODIFIED", "severity": "WARNING", "file": "tsconfig.json" }
+  },
+  {
+    "name": "existing migration modified",
+    "before": { "db/migrations/001_users.sql": "CREATE TABLE users(id int);\n" },
+    "after": { "db/migrations/001_users.sql": "CREATE TABLE users(id bigint);\n" },
+    "expected": { "code": "SCOPE_MIGRATION_MODIFIED", "severity": "WARNING", "file": "db/migrations/001_users.sql" }
+  },
+  {
+    "name": "public API signature changed",
+    "before": { "src/date.ts": "export function format(value: Date): string { return ''; }\n" },
+    "after": { "src/date.ts": "export function format(value: Date, zone: string): string { return ''; }\n" },
+    "expected": { "code": "SCOPE_PUBLIC_API_CHANGED", "severity": "WARNING", "file": "src/date.ts" }
+  },
+  {
+    "name": "secret-like file added",
+    "before": {},
+    "after": { ".env.production": "placeholder=true\n" },
+    "expected": { "code": "SCOPE_SECRET_LIKE_FILE_ADDED", "severity": "FAIL", "file": ".env.production" }
+  },
+  {
+    "name": "binary added",
+    "before": {},
+    "after": { "assets/logo.png": { "base64": "iVBORw0KGgoAAAANSUhEUg==" } },
+    "expected": { "code": "SCOPE_BINARY_ADDED", "severity": "WARNING", "file": "assets/logo.png" }
+  },
+  {
+    "name": "large single-file patch is not a scope signal",
+    "before": { "src/internal.ts": "const values = [];\n" },
+    "after": { "src/internal.ts": "const values = [1,2,3,4,5,6,7,8,9,10];\n" },
+    "expected": null
+  },
+  {
+    "name": "environment template is not secret evidence",
+    "before": {},
+    "after": { ".env.example": "TOKEN=replace-me\n" },
+    "expected": null
+  },
+  {
+    "name": "ordinary source named secrets is not secret evidence",
+    "before": {},
+    "after": { "src/secrets.ts": "const label = 'secrets';\n" },
+    "expected": null
+  },
+  {
+    "name": "implementation-only export change is not API evidence",
+    "before": { "src/value.ts": "export const value = 1;\n" },
+    "after": { "src/value.ts": "export const value = 2;\n" },
+    "expected": null
+  }
+]
