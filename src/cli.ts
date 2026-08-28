@@ -7,7 +7,7 @@ import { verifyRepository } from "./core/verifier.js";
 
 function usage(): never {
   process.stderr.write(
-    "Usage: pi-proof verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N]\n",
+    "Usage: pi-verity verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N]\n",
   );
   process.exit(2);
 }
@@ -49,7 +49,7 @@ else
     encoding: "utf8",
     mode: 0o600,
   });
-process.stderr.write(`pi-proof: ${receipt.verdict}\n`);
+process.stderr.write(`pi-verity: ${receipt.verdict}\n`);
 if (receipt.verdict === "PASS" || receipt.verdict === "PASS_WITH_WARNINGS")
   process.exitCode = 0;
 else if (receipt.verdict === "FAIL") process.exitCode = 1;

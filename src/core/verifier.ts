@@ -192,7 +192,7 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
     scopeIntegrity.analyzed_files.length > 0;
   if (baseline.dirty)
     warnings.push(
-      "Baseline working tree was dirty; pi-proof does not claim a clean baseline",
+      "Baseline working tree was dirty; pi-verity does not claim a clean baseline",
     );
 
   const discovery = await discoverVerification(root);

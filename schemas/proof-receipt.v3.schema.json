@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:pi-proof:schema:proof-receipt:v3",
-  "title": "pi-proof ProofReceipt v3",
+  "$id": "urn:pi-verity:schema:proof-receipt:v3",
+  "title": "pi-verity ProofReceipt v3",
   "type": "object",
   "additionalProperties": false,
   "required": [

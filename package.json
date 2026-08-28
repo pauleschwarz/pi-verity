@@ -1,23 +1,23 @@
 {
-  "name": "@pauleschwarz/pi-proof",
+  "name": "@pauleschwarz/pi-verity",
   "version": "0.1.0",
-  "description": "Proof-carrying patches for coding agents.",
+  "description": "A model-agnostic execution gate that turns coding-agent patches into evidence-backed changes.",
   "type": "module",
   "author": "Paul Schwarz",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pauleschwarz/pi-proof.git"
+    "url": "git+https://github.com/pauleschwarz/pi-verity.git"
   },
-  "homepage": "https://github.com/pauleschwarz/pi-proof#readme",
+  "homepage": "https://github.com/pauleschwarz/pi-verity#readme",
   "bugs": {
-    "url": "https://github.com/pauleschwarz/pi-proof/issues"
+    "url": "https://github.com/pauleschwarz/pi-verity/issues"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
   },
   "bin": {
-    "pi-proof": "dist/cli.js"
+    "pi-verity": "dist/cli.js"
   },
   "exports": {
     ".": "./dist/core/index.js",
@@ -67,10 +67,14 @@
     "node": ">=20"
   },
   "keywords": [
-    "pi-package",
-    "pi-extension",
-    "coding-agent",
+    "ai-agents",
+    "coding-agents",
     "verification",
+    "developer-tools",
+    "typescript",
+    "pi",
+    "agentic-engineering",
+    "software-testing",
     "counterfactual-testing",
     "proof-receipt"
   ],

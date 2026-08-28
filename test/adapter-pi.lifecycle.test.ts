@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
-import piProof from "../src/adapter-pi/index.js";
+import piVerity from "../src/adapter-pi/index.js";
 import type { ProofReceipt } from "../src/core/types.js";
 
 const execFileAsync = promisify(execFile);
@@ -65,7 +65,7 @@ function fakePi() {
 }
 
 async function createFixture(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "pi-proof-adapter-test-"));
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-adapter-test-"));
   await writeFile(
     join(root, "package.json"),
     `${JSON.stringify({
@@ -85,7 +85,7 @@ async function createFixture(): Promise<string> {
     "git",
     [
       "-c",
-      "user.name=pi-proof test",
+      "user.name=pi-verity test",
       "-c",
       "user.email=test@invalid",
       "commit",
@@ -105,7 +105,7 @@ async function cleanupReceipts(paths: string[]): Promise<void> {
 test("automatic repair keeps an exact counterfactual baseline", async () => {
   const root = await createFixture();
   const fake = fakePi();
-  piProof(fake.api);
+  piVerity(fake.api);
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
@@ -142,9 +142,9 @@ test("automatic repair keeps an exact counterfactual baseline", async () => {
 test("automatic repair stops after the configured limit", async () => {
   const root = await createFixture();
   const fake = fakePi();
-  const previousLimit = process.env.PI_PROOF_MAX_REPAIR_ATTEMPTS;
-  process.env.PI_PROOF_MAX_REPAIR_ATTEMPTS = "2";
-  piProof(fake.api);
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "2";
+  piVerity(fake.api);
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
@@ -166,9 +166,9 @@ test("automatic repair stops after the configured limit", async () => {
     assert.match(fake.messages[2]?.content ?? "", /repair limit reached \(2\)/);
   } finally {
     if (previousLimit === undefined) {
-      Reflect.deleteProperty(process.env, "PI_PROOF_MAX_REPAIR_ATTEMPTS");
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
     } else {
-      process.env.PI_PROOF_MAX_REPAIR_ATTEMPTS = previousLimit;
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
     }
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
@@ -176,21 +176,22 @@ test("automatic repair stops after the configured limit", async () => {
   }
 });
 
-test("overlapping explicit proof runs are coalesced", async () => {
+test("overlapping explicit Verity runs are coalesced", async () => {
   const root = await createFixture();
   const fake = fakePi();
-  piProof(fake.api);
+  piVerity(fake.api);
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
-    const command = fake.commands.get("proof");
+    const command = fake.commands.get("verity");
     assert.ok(command);
+    assert.equal(fake.commands.has("proof"), false);
     const first = command("run", context);
     const second = command("run", context);
     await Promise.all([first, second]);
 
     assert.equal(fake.entries.length, 1);
-    assert.ok(fake.notices.includes("pi-proof: verification already running"));
+    assert.ok(fake.notices.includes("pi-verity: verification already running"));
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));

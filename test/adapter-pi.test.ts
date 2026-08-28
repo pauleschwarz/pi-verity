@@ -60,7 +60,7 @@ function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
 test("successful summary is concise and deterministic", () => {
   assert.equal(
     formatReceiptSummary(receipt()),
-    "pi-proof ✓ 2 checks · 1.8s · proof: PASS",
+    "pi-verity ✓ 2 checks · 1.8s · proof: PASS",
   );
 });
 
@@ -133,7 +133,7 @@ test("failure evidence is bounded and redacts common secret assignments", () => 
 
   assert.equal(
     formatReceiptSummary(failed),
-    "pi-proof ✗ FAIL\nnpm test failed\n/proof why",
+    "pi-verity ✗ FAIL\nnpm test failed\n/verity why",
   );
   const evidence = minimalFailureEvidence(failed);
   assert.match(evidence, /npm test · FAIL \(exit 1\)/);

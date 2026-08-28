@@ -5,7 +5,7 @@ artifacts/
 *.receipt.json
 *.receipt.jsonl
 *.tgz
-pi-proof-github-docs.zip
+pi-verity-github-docs.zip
 
 # Internal research/source material (not part of the public repository)
 raw/

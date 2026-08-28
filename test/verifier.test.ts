@@ -22,7 +22,7 @@ async function git(root: string, ...args: string[]): Promise<void> {
 }
 
 async function fixture(script = 'node -e "process.exit(0)"'): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "pi-proof-test-"));
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-test-"));
   fixtures.push(root);
   await git(root, "init", "-q");
   await git(root, "config", "user.email", "proof@example.invalid");
@@ -205,7 +205,7 @@ test("malformed config does not crash and is UNPROVEN", async () => {
 });
 
 test("no git repository returns a bounded UNPROVEN receipt", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pi-proof-no-git-"));
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-no-git-"));
   fixtures.push(root);
   const receipt = await verifyRepository({ cwd: root });
   assert.equal(receipt.verdict, "UNPROVEN");
@@ -214,7 +214,7 @@ test("no git repository returns a bounded UNPROVEN receipt", async () => {
 });
 
 test("Python, Rust, Go, and Node lockfile discovery uses deterministic commands", async () => {
-  const root = await mkdtemp(join(tmpdir(), "pi-proof-discovery-"));
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-discovery-"));
   fixtures.push(root);
   await writeFile(
     join(root, "pyproject.toml"),

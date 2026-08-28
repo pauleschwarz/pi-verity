@@ -1,15 +1,17 @@
 # Releasing
 
-Nothing in this repository publishes automatically. The release workflow only verifies and uploads a package tarball artifact; a maintainer must explicitly create `pauleschwarz/pi-proof`, create the GitHub release, and publish `@pauleschwarz/pi-proof` to npm.
+Nothing in this repository publishes automatically. The release workflow only verifies and uploads a package tarball artifact; a maintainer must explicitly create `pauleschwarz/pi-verity`, create the GitHub release, and publish `@pauleschwarz/pi-verity` to npm.
 
 ## One-time setup
 
 The repository and package identities are configured in `package.json`. Before the first public release:
 
 1. Confirm `npm whoami` is an account allowed to publish under the `@pauleschwarz` scope.
-2. Confirm `npm view @pauleschwarz/pi-proof` still returns `E404`; this means no package currently exists at that name, not that publication permission is established.
-3. Create `pauleschwarz/pi-proof` and enable GitHub private vulnerability reporting.
-4. Add the repository's absolute advisory URL to the issue-template contact links if desired.
+2. Confirm `npm view @pauleschwarz/pi-verity` still returns `E404`; this means no package currently exists at that name, not that publication permission is established.
+3. Create `pauleschwarz/pi-verity`, or safely rename the empty private placeholder if it still exists, and enable GitHub private vulnerability reporting.
+4. Set the GitHub description to: `Model-agnostic execution gate for coding agents. Turns agent patches into evidence-backed changes.`
+5. Add only accurate topics from: `ai-agents`, `coding-agents`, `verification`, `developer-tools`, `typescript`, `pi`, `agentic-engineering`, `software-testing`.
+6. Verify the repository's absolute advisory URL in the issue-template contact link.
 
 ## Local release gate
 
@@ -36,22 +38,19 @@ Also complete and record:
 
 Update [`docs/RELEASE_READINESS.md`](docs/RELEASE_READINESS.md) with exact commands and unresolved limitations.
 
-## Create the GitHub repository
+## Prepare the GitHub repository
 
-This directory was delivered without Git history. Review all files before the first commit, especially `raw/`, `proposal/`, `evidence/`, and the source documentation ZIP; those are not included in the npm tarball and may be omitted from the public repository if they are not intended for publication.
+Preserve the existing local Git history. Review the complete diff and tracked file set before any remote action; internal `raw/`, `proposal/`, `evidence/`, and source archives are intentionally excluded from the public repository and npm tarball.
 
-A typical explicit flow is:
+If the earlier empty private placeholder still exists, rename it safely to `pauleschwarz/pi-verity`; otherwise create only the canonical repository. Then set the local remote and push explicitly:
 
 ```bash
-git init -b main
-git add .
+git remote set-url origin https://github.com/pauleschwarz/pi-verity.git
 git status --short
-git commit -m "feat: initial pi-proof pre-release"
-gh repo create pauleschwarz/pi-proof --source=. --private --remote=origin
 git push -u origin main
 ```
 
-Use `--public` only after reviewing the staged file list and security policy. Creating a repository or pushing is an external action and is intentionally not automated here.
+Use public visibility only after reviewing the tracked file list, security policy, description, and topics. Creating, renaming, changing visibility, or pushing a repository is an external action and must remain explicit.
 
 ## Git pre-release
 
@@ -62,7 +61,7 @@ Use `--public` only after reviewing the staged file list and security policy. Cr
 5. Create an annotated tag:
 
 ```bash
-git tag -a v0.1.0 -m "pi-proof v0.1.0"
+git tag -a v0.1.0 -m "pi-verity v0.1.0"
 git push origin v0.1.0
 ```
 
@@ -70,7 +69,7 @@ git push origin v0.1.0
 2. Verify installation from the immutable tag:
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-proof@v0.1.0
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.0
 ```
 
 ## npm release

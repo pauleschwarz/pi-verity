@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for improving `pi-proof`.
+Thank you for improving `pi-verity`.
 
 ## Development setup
 
@@ -54,7 +54,7 @@ npm audit
 
 ## Documentation
 
-Document only shipped behavior. There is no `.pi-proof.yml` parser today. Any receipt schema change must bump `schema_version`, update the JSON Schema, fixtures, changelog, and release notes.
+Document only shipped behavior. There is no `.pi-verity.yml` parser today. Any receipt schema change must bump `schema_version`, update the JSON Schema, fixtures, changelog, and release notes.
 
 ## Pull requests
 

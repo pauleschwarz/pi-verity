@@ -2,7 +2,7 @@
 
 ## Scope
 
-`pi-proof` executes verification inside software repositories potentially modified by an AI coding agent.
+`pi-verity` executes verification inside software repositories potentially modified by an AI coding agent.
 
 That creates two classes of untrusted input:
 
@@ -11,7 +11,7 @@ That creates two classes of untrusted input:
 
 The verifier itself runs with the user's operating-system privileges unless externally sandboxed.
 
-`pi-proof` is **not** a security sandbox.
+`pi-verity` is **not** a security sandbox.
 
 ## Assets
 
@@ -138,7 +138,7 @@ Mitigations:
 
 ```text
 trusted-ish:
-  pi-proof code + explicitly chosen policy
+  pi-verity code + explicitly chosen policy
 
 untrusted:
   repository

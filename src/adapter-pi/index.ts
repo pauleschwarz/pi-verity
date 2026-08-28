@@ -72,7 +72,7 @@ function taskId(sessionId: string | undefined, sequence: number): string {
 }
 
 function configuredRepairLimit(): number {
-  const configured = process.env.PI_PROOF_MAX_REPAIR_ATTEMPTS;
+  const configured = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
   if (configured === undefined) return 2;
   const parsed = Number(configured);
   if (!Number.isSafeInteger(parsed) || parsed < 0) return 2;
@@ -112,7 +112,7 @@ function checkCount(receipt: ProofReceipt): number {
 export function formatReceiptSummary(receipt: ProofReceipt): string {
   const seconds = (receiptDuration(receipt) / 1000).toFixed(1);
   if (receipt.verdict === "PASS") {
-    return `pi-proof ✓ ${checkCount(receipt)} checks · ${seconds}s · proof: PASS`;
+    return `pi-verity ✓ ${checkCount(receipt)} checks · ${seconds}s · proof: PASS`;
   }
 
   const marker = receipt.verdict === "FAIL" ? "✗" : "⚠";
@@ -136,11 +136,11 @@ export function formatReceiptSummary(receipt: ProofReceipt): string {
     ...receipt.unverified_dimensions,
   ].slice(0, 2);
   const suffix = details.length === 0 ? "" : `\n${details.join(" · ")}`;
-  return `pi-proof ${marker} ${receipt.verdict}${suffix}\n/proof why`;
+  return `pi-verity ${marker} ${receipt.verdict}${suffix}\n/verity why`;
 }
 
 export function explainReceipt(receipt: ProofReceipt): string {
-  const lines = [`pi-proof ${receipt.verdict}`];
+  const lines = [`pi-verity ${receipt.verdict}`];
   if (receipt.verification_commands.length === 0) {
     lines.push(
       "check · unavailable · no supported safe verification command was selected",
@@ -200,7 +200,7 @@ export function receiptMatchesState(
 }
 
 export function minimalFailureEvidence(receipt: ProofReceipt): string {
-  const lines = ["pi-proof deterministic failure:"];
+  const lines = ["pi-verity deterministic failure:"];
   const failedCommand = receipt.verification_commands.find(
     (result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled,
   );
@@ -216,7 +216,7 @@ export function minimalFailureEvidence(receipt: ProofReceipt): string {
     .slice(0, 3)) {
     lines.push(`${signal.code} · ${signal.file} · ${signal.observed}`);
   }
-  lines.push("Inspect with /proof why. Repair only the evidenced failure.");
+  lines.push("Inspect with /verity why. Repair only the evidenced failure.");
   return lines.join("\n");
 }
 
@@ -227,7 +227,7 @@ function parseSubcommand(args: string): ProofSubcommand {
   return "invalid";
 }
 
-class PiProofRuntime {
+class PiVerityRuntime {
   private baseline: GitSnapshot | undefined;
   private root: string | undefined;
   private sessionId: string | undefined;
@@ -259,7 +259,7 @@ class PiProofRuntime {
       this.activeController?.abort();
       await this.counterfactualBaseline?.cleanup();
     });
-    this.pi.registerCommand("proof", {
+    this.pi.registerCommand("verity", {
       description: "Show, run, explain, or locate deterministic proof",
       handler: async (args, context) => {
         await this.handleCommand(args, context);
@@ -301,7 +301,7 @@ class PiProofRuntime {
     const options: VerifyOptions = {
       cwd: this.root ?? context.cwd ?? process.cwd(),
       allowCounterfactualNetwork:
-        process.env.PI_PROOF_ALLOW_COUNTERFACTUAL_NETWORK === "1",
+        process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK === "1",
       taskId: taskId(this.sessionId, this.taskSequence),
     };
     if (this.activeController !== undefined) {
@@ -326,13 +326,13 @@ class PiProofRuntime {
       homedir(),
       ".pi",
       "agent",
-      "pi-proof",
+      "pi-verity",
       "receipts",
       rootKey,
       `${receipt.session_id ?? "session"}-${Date.now()}.json`,
     );
     await writeReceipt(file, receipt);
-    this.pi.appendEntry("pi-proof", {
+    this.pi.appendEntry("pi-verity", {
       receiptPath: file,
       verdict: receipt.verdict,
       changedFiles: receipt.changed_files,
@@ -348,7 +348,7 @@ class PiProofRuntime {
       this.automaticRepairAttempts += 1;
       this.pi.sendMessage(
         {
-          customType: "pi-proof-failure",
+          customType: "pi-verity-failure",
           content: `${evidence}\nAutomatic repair attempt ${this.automaticRepairAttempts}/${limit}.`,
           display: true,
           details: { verdict: receipt.verdict },
@@ -359,7 +359,7 @@ class PiProofRuntime {
     }
     this.pi.sendMessage(
       {
-        customType: "pi-proof-failure",
+        customType: "pi-verity-failure",
         content: `${evidence}\nAutomatic repair limit reached (${limit}); stop automatic repair.`,
         display: true,
         details: { verdict: receipt.verdict },
@@ -385,7 +385,7 @@ class PiProofRuntime {
     if (!force && !this.repositoryOperationObserved) return undefined;
     if (this.verificationInProgress) {
       if (announce) {
-        context.ui?.notify?.("pi-proof: verification already running", "info");
+        context.ui?.notify?.("pi-verity: verification already running", "info");
       }
       return undefined;
     }
@@ -394,7 +394,7 @@ class PiProofRuntime {
     this.activeController = new AbortController();
     const capturedWorkspace = this.counterfactualBaseline;
     this.counterfactualBaseline = undefined;
-    context.ui?.setStatus?.("pi-proof", "verifying repository");
+    context.ui?.setStatus?.("pi-verity", "verifying repository");
     try {
       const receipt = await verifyRepository(
         this.verifyOptions(context, capturedWorkspace),
@@ -420,13 +420,13 @@ class PiProofRuntime {
       return receipt;
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      context.ui?.notify?.(`pi-proof could not verify: ${detail}`, "error");
+      context.ui?.notify?.(`pi-verity could not verify: ${detail}`, "error");
       return undefined;
     } finally {
       await capturedWorkspace?.cleanup();
       this.activeController = undefined;
       this.verificationInProgress = false;
-      context.ui?.setStatus?.("pi-proof", undefined);
+      context.ui?.setStatus?.("pi-verity", undefined);
     }
   }
 
@@ -442,7 +442,10 @@ class PiProofRuntime {
 
   private notifyWhy(context: PiContext, stale: boolean): void {
     if (this.lastReceipt === undefined) {
-      context.ui?.notify?.("pi-proof: no current receipt · run /proof run", "warning");
+      context.ui?.notify?.(
+        "pi-verity: no current receipt · run /verity run",
+        "warning",
+      );
       return;
     }
     const prefix = stale ? "STALE · repository changed after this receipt\n" : "";
@@ -452,23 +455,29 @@ class PiProofRuntime {
 
   private notifyReceipt(context: PiContext): void {
     if (this.lastReceipt === undefined || this.lastReceiptPath === undefined) {
-      context.ui?.notify?.("pi-proof: no current receipt · run /proof run", "warning");
+      context.ui?.notify?.(
+        "pi-verity: no current receipt · run /verity run",
+        "warning",
+      );
       return;
     }
     context.ui?.notify?.(
-      `pi-proof receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`,
+      `pi-verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`,
       "info",
     );
   }
 
   private notifyCurrent(context: PiContext, stale: boolean): void {
     if (this.lastReceipt === undefined) {
-      context.ui?.notify?.("pi-proof: no current receipt · run /proof run", "warning");
+      context.ui?.notify?.(
+        "pi-verity: no current receipt · run /verity run",
+        "warning",
+      );
       return;
     }
     if (stale) {
       context.ui?.notify?.(
-        "pi-proof ⚠ STALE · repository changed · /proof run",
+        "pi-verity ⚠ STALE · repository changed · /verity run",
         "warning",
       );
       return;
@@ -486,7 +495,7 @@ class PiProofRuntime {
       return;
     }
     if (subcommand === "invalid") {
-      context.ui?.notify?.("Usage: /proof [run|why|receipt]", "warning");
+      context.ui?.notify?.("Usage: /verity [run|why|receipt]", "warning");
       return;
     }
     if (subcommand === "receipt") {
@@ -499,6 +508,6 @@ class PiProofRuntime {
   }
 }
 
-export default function piProof(pi: PiApi): void {
-  new PiProofRuntime(pi).register();
+export default function piVerity(pi: PiApi): void {
+  new PiVerityRuntime(pi).register();
 }

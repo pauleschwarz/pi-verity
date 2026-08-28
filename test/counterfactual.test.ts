@@ -24,7 +24,7 @@ async function repository(
   initialTest?: string,
   script = "node --test",
 ): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "pi-proof-counterfactual-"));
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-counterfactual-"));
   fixtures.push(root);
   await git(root, "init", "-q");
   await git(root, "config", "user.email", "proof@example.invalid");

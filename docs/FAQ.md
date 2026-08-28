@@ -1,24 +1,22 @@
 # FAQ
 
-## Is this another AI reviewer?
+## Does Pi Verity ask another model to review the patch?
 
-No.
+No. Pi Verity is an execution gate, not a model reviewer.
 
-The verifier does not call an LLM.
-
-It interprets deterministic evidence from Git state, one conservatively selected repository command, scope integrity, and counterfactual behavior when applicable.
+It calls no LLM. It interprets deterministic evidence from Git state, one conservatively selected repository command, scope integrity, and counterfactual behavior when applicable.
 
 ## Why not just use CI?
 
 Use CI too.
 
-`pi-proof` operates in the interactive agent loop and can catch failures before a patch is presented as complete. CI remains the authoritative integration gate for many teams.
+`pi-verity` operates in the interactive agent loop and can catch failures before a patch is presented as complete. CI remains the authoritative integration gate for many teams.
 
 ## Why not ask a stronger model to review the weak model?
 
 A strong reviewer can help on semantic/architectural questions, but it adds cost and correlated judgment.
 
-`pi-proof` focuses on evidence that does not require another model.
+`pi-verity` focuses on evidence that does not require another model.
 
 ## Does it work with every Pi model?
 

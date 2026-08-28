@@ -46,7 +46,7 @@ A test suite can be green because:
 - the implementation and test encode the same misunderstanding
 - the relevant test did not run
 
-`pi-proof` therefore distinguishes "check passed" from "change proven".
+`pi-verity` therefore distinguishes "check passed" from "change proven".
 
 ## 4. Inconclusive is a first-class result
 
@@ -82,7 +82,7 @@ the agent added an unnecessary dependency
 
 The latter requires intent judgment that may not be provable.
 
-## 6. No magic quality score
+## 6. No opaque scoring
 
 Do not output:
 
@@ -116,7 +116,7 @@ The proof planner should select the smallest set that satisfies required dimensi
 
 ## 9. Strong models do not bypass proof
 
-Model quality may influence execution strategy outside `pi-proof`.
+Model quality may influence execution strategy outside `pi-verity`.
 
 It must not make proof requirements disappear.
 
@@ -164,7 +164,7 @@ Any network-requiring verification must be explicit.
 
 ## 13. Explain every decision
 
-`/proof why` must explain:
+`/verity why` must explain:
 
 - why a check ran
 - why it was skipped
@@ -183,4 +183,4 @@ Pi is the first adapter, not the product boundary.
 
 The durable product is:
 
-> proof semantics for coding-agent patches.
+> a model-agnostic execution gate that turns coding-agent patches into evidence-backed changes.

@@ -243,7 +243,7 @@ export async function runCounterfactual(
     candidateWorkspace = await createIsolatedWorkspace(
       options.root,
       options.maxWorkspaceBytes,
-      "pi-proof-candidate-",
+      "pi-verity-candidate-",
     );
     const command = narrow(options.command, portable);
     const runOptions: Omit<RunOptions, "cwd"> = {

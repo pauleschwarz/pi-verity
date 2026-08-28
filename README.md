@@ -1,210 +1,214 @@
-# pi-proof
+# pi-verity
 
-> **Proof-carrying patches for coding agents.**
+**Pi Verity turns agent patches into evidence-backed changes.**
 
-`pi-proof` is a deterministic, model-independent verification layer for Pi that turns repository changes into bounded, inspectable proof receipts.
+A model-agnostic execution gate for coding agents that independently proves:
 
-> **Release status:** pre-release. Local and Git package installation are supported for evaluation. The npm package is configured as `@pauleschwarz/pi-proof` but has not been published. Nothing in this repository publishes automatically.
+- what actually changed,
+- whether the evidence depends on that patch,
+- and whether the proof is still valid.
 
-## Problem
+Your coding agent says "done."
+Pi Verity does not ask another model whether it agrees.
+It checks the resulting state.
 
-A coding agent can produce a wrong implementation, weaken or replace the test that should catch it, and still report a green suite. The model that wrote a patch is not an independent authority on whether that patch is correct.
+```bash
+npm ci
+npm run build
+node dist/cli.js verify . --output proof-receipt.json
+# pi-verity: PASS
+```
 
-`pi-proof` observes repository state, selects conservative existing checks, records deterministic scope-integrity signals, and emits a structured `ProofReceipt` with one of four verdicts:
+> **Release status:** pre-release. Local and Git-package evaluation are supported. The npm package `@pauleschwarz/pi-verity` is configured but not published, and nothing in this repository publishes automatically.
 
-- `PASS` — selected evidence passed.
-- `PASS_WITH_WARNINGS` — selected evidence passed, but bounded warnings remain.
-- `FAIL` — deterministic evidence failed.
-- `UNPROVEN` — required evidence was unavailable, cancelled, timed out, or inconclusive.
+## The three questions
 
-## Why green tests are insufficient
+### 1. What actually changed?
 
-A test can pass for the wrong reason. It can pass both before and after a patch, skip the failing path, lose an assertion, or be accompanied by an unrelated risky change. `pi-proof` therefore combines command results with baseline identity, counterfactual evidence, anti-gaming checks, and scope-integrity signals. It never treats patch size alone as failure and never claims a change was unnecessary unless that has actually been proven.
+Pi Verity does not trust a textual completion claim. It binds verification to the observed Git state, the actual changed files, a baseline identity, and the final repository-state hash.
 
-## Counterfactual verification
+### 2. Does the evidence depend on that change?
 
-When test files change and an exact baseline workspace is available, `pi-proof` runs the candidate test against both implementations:
+When tests change and an exact baseline workspace is available, Pi Verity checks patch polarity:
 
 ```text
-candidate test + baseline implementation  -> should fail (RED)
-candidate test + candidate implementation -> should pass (GREEN)
+candidate test + baseline implementation  -> FAIL (RED)
+candidate test + candidate implementation -> PASS (GREEN)
 ```
 
-A test that passes on both sides is reported as non-discriminating rather than accepted as proof. Runs are bounded, use disposable workspace copies, and do not reset, stash, or clean the original working tree.
+If the candidate test passes against both implementations, it is non-discriminating evidence—not strong proof of the patch.
 
-## Model independence
+### 3. Is the proof still valid?
 
-The verification core imports no Pi, model, provider, or LLM SDK and makes no LLM calls. A receipt is derived from repository state and command results, so changing the executing model or provider does not change proof semantics for the same workspace and configuration.
-
-On deterministic failure, the Pi adapter sends only bounded failure evidence back to the **same** session agent. It never spawns a critic or repair agent. Automatic repair follow-ups default to two consecutive attempts; after the limit, evidence is queued without triggering another turn.
-
-## Pi integration
-
-The package exposes one thin Pi extension through `package.json` and supports:
+A successful proof receipt is bound to the candidate repository state. If relevant state changes afterward, the Pi adapter reports:
 
 ```text
-/proof          show the current concise verdict
-/proof run      execute verification now
-/proof why      explain every selected check and emitted signal
-/proof receipt  show the persisted receipt path and canonical JSON
+PASS -> STALE
 ```
 
-Automatic verification runs only after repository-changing tools were observed. Successful automatic runs remain quiet. Warnings and failures use bounded summaries such as:
+A receipt for an earlier patch is not proof for a later one.
 
-```text
-pi-proof ✓ 4 checks · 1.8s · proof: PASS
+## Why an execution gate?
 
-pi-proof ⚠ PASS_WITH_WARNINGS
-dependency added · counterfactual proof unavailable
-/proof why
+A coding agent can produce a wrong implementation, weaken the test that should catch it, and still report a green suite. Asking another model for an opinion does not create independent evidence.
 
-pi-proof ✗ FAIL
-targeted test failed
-/proof why
-```
+Pi Verity instead observes the repository, selects conservative deterministic checks, records scope-integrity signals, evaluates counterfactual evidence where applicable, and emits a state-bound `ProofReceipt`.
 
-Receipts are persisted with mode `0600` under:
+> **The model may produce the change. It does not certify the change.**
 
-```text
-~/.pi/agent/pi-proof/receipts/<repository-hash>/
-```
+Weak agents are not made smarter. Unsupported completions are made harder to pass.
 
-## Architecture
+## Pi usage
 
-```mermaid
-flowchart LR
-    A[Pi agent edits repository] --> B[Thin Pi adapter]
-    B --> C[Git and exact workspace baseline]
-    B --> D[Pi-independent verifier core]
-    D --> E[Conservative command discovery]
-    D --> F[Scope integrity]
-    D --> G[Counterfactual verification]
-    E --> H[Bounded process runner]
-    F --> I[Canonical ProofReceipt v3]
-    G --> I
-    H --> I
-    I --> J[Quiet summary / commands]
-    I --> K[0600 receipt file]
-    I -->|deterministic FAIL only| L[Bounded evidence to same agent]
-```
-
-There are only three runtime surfaces:
-
-- `src/core/` — deterministic verification, isolation, policy, and receipt generation.
-- `src/adapter-pi/` — Pi lifecycle and command integration.
-- `src/cli.ts` — optional `pi-proof verify` CLI.
-
-No daemon, service, database, model router, or secondary agent is introduced.
-
-## Installation
-
-Review the source first: Pi extensions execute with the user's privileges.
-
-### Local evaluation
+Install from a reviewed local checkout:
 
 ```bash
 npm ci
 npm run verify
-pi install /absolute/path/to/pi-proof
+pi install /absolute/path/to/pi-verity
 ```
 
-### Git package
+Then use the Verity gate in Pi:
 
-After this repository is pushed to GitHub and tagged:
-
-```bash
-pi install git:github.com/pauleschwarz/pi-proof@v0.1.0
-# or, for a one-run evaluation:
-pi -e git:github.com/pauleschwarz/pi-proof@v0.1.0
+```text
+/verity          show the current concise verdict
+/verity run      execute verification now
+/verity why      explain every selected check and emitted signal
+/verity receipt  show the persisted receipt path and canonical JSON
 ```
 
-Pi clones the repository and runs `npm install`; the `prepare` script builds `dist/`.
+Successful automatic runs remain quiet. Warnings and failures are bounded:
 
-### npm package
+```text
+pi-verity ✓ 4 checks · 1.8s · proof: PASS
 
-The manifest and lockfile use the currently unclaimed scoped name `@pauleschwarz/pi-proof`. After the manual release gates pass and the package is explicitly published, install it with:
+pi-verity ⚠ PASS_WITH_WARNINGS
+dependency added · counterfactual proof unavailable
+/verity why
 
-```bash
-pi install npm:@pauleschwarz/pi-proof@0.1.0
+pi-verity ✗ FAIL
+targeted test failed
+/verity why
 ```
 
-The unscoped npm name `pi-proof` is a different package maintained by `kreek`; the GitHub repository name is unaffected by that registry-level collision.
+Receipts are written with mode `0600` where supported under:
 
-## Zero-config behavior
+```text
+~/.pi/agent/pi-verity/receipts/<repository-hash>/
+```
 
-For a changed repository, at most one conservative command is selected:
-
-- Node: first available script from `test`, `verify`, `check`, `typecheck`, `lint`, using the detected lockfile runner.
-- Python: `python3 -m pytest` only when pytest is configured in `pyproject.toml`.
-- Rust: `cargo test`.
-- Go: `go test ./...`.
-
-Potentially destructive Node scripts are refused. Dependencies are never installed by `pi-proof`. A clean unchanged repository does not run an unnecessary command.
-
-## Configuration
-
-The shipped configuration surface is intentionally small and environment-based:
-
-| Variable | Default | Meaning |
-| --- | ---: | --- |
-| `PI_PROOF_MAX_REPAIR_ATTEMPTS` | `2` | Automatic same-agent follow-ups after deterministic `FAIL`; integer `0..10` (`0` disables). Invalid values fall back to `2`. |
-| `PI_PROOF_ALLOW_COUNTERFACTUAL_NETWORK` | unset | Set to `1` to allow network during counterfactual runs. Otherwise macOS counterfactual runs deny network when the platform mechanism is available. |
-
-CLI limits are explicit flags:
+## CLI
 
 ```bash
-pi-proof verify [repository] \
+pi-verity verify [repository] \
   [--output receipt.json] \
   [--timeout-ms N] \
   [--max-output-bytes N]
 ```
 
-There is currently **no** `.pi-proof.yml` parser. Unknown repository configuration is not silently accepted. See [Configuration](docs/CONFIGURATION.md).
+The CLI exits `0` for `PASS` and `PASS_WITH_WARNINGS`, `1` for `FAIL`, and `2` for `UNPROVEN` or invalid usage.
 
-## Examples
-
-Run verification and write a receipt:
+After a tagged GitHub release exists:
 
 ```bash
-npx @pauleschwarz/pi-proof verify . --output proof-receipt.json
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.0
 ```
 
-Inspect a warning in Pi:
+After a separate, explicit npm publication:
+
+```bash
+pi install npm:@pauleschwarz/pi-verity@0.1.0
+npx @pauleschwarz/pi-verity verify . --output proof-receipt.json
+```
+
+## Verdicts
+
+- `PASS` — selected deterministic evidence passed.
+- `PASS_WITH_WARNINGS` — selected evidence passed, but bounded warnings remain.
+- `FAIL` — deterministic evidence failed.
+- `UNPROVEN` — required evidence was unavailable, cancelled, timed out, or inconclusive.
+
+Pi Verity does not turn uncertainty into `PASS` and does not infer correctness from patch size.
+
+## Deterministic evidence
+
+The zero-config gate selects at most one conservative repository command:
+
+- Node: first available script from `test`, `verify`, `check`, `typecheck`, or `lint`, using the detected lockfile runner.
+- Python: `python3 -m pytest` only when pytest is configured in `pyproject.toml`.
+- Rust: `cargo test`.
+- Go: `go test ./...`.
+
+Potentially destructive Node scripts are refused. Dependencies are never installed by Pi Verity. A clean, unchanged repository does not run an unnecessary command.
+
+Current adapter configuration is environment-based:
+
+| Variable | Default | Meaning |
+| --- | ---: | --- |
+| `PI_VERITY_MAX_REPAIR_ATTEMPTS` | `2` | Automatic same-agent follow-ups after deterministic `FAIL`; integer `0..10`, where `0` disables them. |
+| `PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK` | unset | Set to `1` to allow network during counterfactual runs. |
+
+Repository configuration discovery is not shipped in `0.1.0`; `.pi-verity.yml` is reserved as the canonical future filename and is not silently accepted today. See [Configuration](docs/CONFIGURATION.md).
+
+## Architecture
 
 ```text
-/proof
-/proof why
-/proof receipt
+@pauleschwarz/pi-verity (core export)
+    independent proof semantics
+
+@pauleschwarz/pi-verity/adapter-pi
+    thin Pi adapter
+
+pi-verity
+    optional direct CLI
 ```
 
-The CLI exits `0` for `PASS` and `PASS_WITH_WARNINGS`, `1` for `FAIL`, and `2` for `UNPROVEN` or usage errors.
+The source has three runtime surfaces:
 
-## Security model
+- `src/core/` — deterministic verification, isolation, policy, and receipt generation.
+- `src/adapter-pi/` — thin Pi lifecycle and command integration.
+- `src/cli.ts` — optional direct CLI.
 
-- No hidden telemetry and no analytics identifiers.
-- No LLM/provider calls.
+The core imports no Pi, agent-core, model, provider, or LLM SDK and makes no LLM calls. Provider/model identity is not proof input. There is no daemon, database, model router, critic agent, or hidden service.
+
+```mermaid
+flowchart LR
+    A[Coding agent edits repository] --> B[Candidate patch]
+    B --> C[Pi Verity execution gate]
+    C --> D[Observed change]
+    C --> E[Deterministic evidence]
+    C --> F[Patch polarity]
+    C --> G[State-bound proof]
+    D --> H[Evidence-backed change]
+    E --> H
+    F --> H
+    G --> H
+```
+
+## Security boundaries
+
+- No hidden telemetry, analytics identifier, provider call, or product network call.
 - No automatic package installation.
-- No product network calls. Repository verification commands remain trusted repository code and may use the network.
-- Counterfactual network denial is enforced on macOS unless explicitly allowed; other platforms report the policy as unavailable rather than claiming isolation.
+- Repository verification commands are trusted repository code and may use the user's privileges and network.
+- Counterfactual execution denies network on supported macOS environments unless explicitly allowed; unsupported platforms report that isolation is unavailable.
 - Command duration, captured output, workspace size, analyzed files, and evidence are bounded.
 - Candidate execution occurs in disposable copies, not the original worktree.
-- Receipt writes are limited to the documented Pi receipt directory; the CLI writes elsewhere only when `--output` is supplied. Temporary copies use the OS temporary directory and are cleaned up.
-- Secret-like files are detected by path without emitting their contents. Command output can still contain repository-produced secrets and should be handled as sensitive evidence.
+- Proof receipts can contain paths and repository-produced output; treat them as sensitive.
 
-Repository scripts execute with the user's privileges inside a filesystem copy; this is not a complete OS sandbox. Read [Threat Model](docs/THREAT_MODEL.md) and [Security Policy](SECURITY.md) before deployment.
+Pi Verity is an execution gate, not an OS sandbox and not a complete proof of semantic correctness. See [Threat Model](docs/THREAT_MODEL.md) and [Limitations](docs/LIMITATIONS.md).
 
-## Limitations
+## Documentation
 
-- Proof covers selected deterministic checks, not full semantic correctness.
-- Zero-config discovery runs at most one standard command.
-- Runtime/UI behavior is not inferred unless an existing selected command exercises it.
-- Counterfactual proof requires a portable test and an exact baseline workspace.
-- Network isolation is currently platform-dependent.
-- Binary and generated-file signals identify changed surfaces; they do not prove necessity.
-- Receipt schema v3 is pre-release and may change before 1.0.
-- The scoped npm package has not yet been published; npm installation is unavailable until the manual release completes.
-
-See [Limitations](docs/LIMITATIONS.md), [Proof Model](docs/PROOF_MODEL.md), and [Release Readiness](docs/RELEASE_READINESS.md).
+- [Architecture](docs/ARCHITECTURE.md)
+- [Proof model](docs/PROOF_MODEL.md)
+- [Counterfactual verification](docs/COUNTERFACTUAL_VERIFICATION.md)
+- [Design principles](docs/DESIGN_PRINCIPLES.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Adapters](docs/ADAPTERS.md)
+- [Threat model](docs/THREAT_MODEL.md)
+- [Limitations](docs/LIMITATIONS.md)
+- [FAQ](docs/FAQ.md)
+- [Release readiness](docs/RELEASE_READINESS.md)
 
 ## Development
 

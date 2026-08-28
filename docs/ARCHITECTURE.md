@@ -1,8 +1,10 @@
 # Architecture
 
+Pi Verity is a model-agnostic execution gate for coding agents. Its architecture separates independent proof semantics from host integration without introducing another model as reviewer or judge.
+
 ## Boundary
 
-`pi-proof` is one npm package with three runtime surfaces:
+`pi-verity` is one npm package with three runtime surfaces:
 
 ```text
 src/core/        deterministic verifier, no Pi or LLM dependency
@@ -34,7 +36,7 @@ sequenceDiagram
     end
     V->>V: analyze deterministic scope signals
     V-->>A: canonical ProofReceipt v3
-    A->>R: write 0600 JSON under ~/.pi/agent/pi-proof/receipts
+    A->>R: write 0600 JSON under ~/.pi/agent/pi-verity/receipts
     A-->>U: quiet PASS or bounded warning/failure
 ```
 
@@ -61,7 +63,7 @@ The adapter uses current public Pi extension APIs to:
 - capture an exact workspace baseline at `before_agent_start`
 - observe repository-capable tools (`write`, `edit`, `bash`, `apply_patch`)
 - verify at `agent_settled` only when such a tool was observed
-- register `/proof`, `/proof run`, `/proof why`, and `/proof receipt`
+- register `/verity`, `/verity run`, `/verity why`, and `/verity receipt`
 - persist receipt metadata in the Pi session
 - persist canonical receipt JSON under the documented receipt directory
 - return bounded deterministic failure evidence to the same session agent
@@ -73,7 +75,7 @@ A consecutive failure counter bounds automatic follow-ups. It defaults to two an
 The CLI calls the same core verifier:
 
 ```text
-pi-proof verify [repository] [--output FILE] [--timeout-ms N] [--max-output-bytes N]
+pi-verity verify [repository] [--output FILE] [--timeout-ms N] [--max-output-bytes N]
 ```
 
 Exit codes are `0` for passing verdicts, `1` for `FAIL`, and `2` for `UNPROVEN` or invalid usage.
@@ -86,12 +88,12 @@ The verifier does not infer that a dependency, migration, generated file, binary
 
 ## State identity and staleness
 
-`ProofReceipt.final_diff_hash` is the final Git state hash. `/proof` compares it with a fresh snapshot before presenting a current verdict. A mismatch is shown as `STALE` and requires `/proof run`.
+`ProofReceipt.final_diff_hash` is the final Git state hash. `/verity` compares it with a fresh snapshot before presenting a current verdict. A mismatch is shown as `STALE` and requires `/verity run`.
 
 ## Storage and writes
 
 - Exact baselines and execution copies use the OS temporary directory and are cleaned up.
-- The Pi adapter writes receipts only under `~/.pi/agent/pi-proof/receipts/`.
+- The Pi adapter writes receipts only under `~/.pi/agent/pi-verity/receipts/`.
 - The CLI writes outside the repository only when the user supplies `--output`.
 - Verification commands execute in disposable repository copies and can write within those copies.
 
@@ -105,7 +107,7 @@ The current architecture does not provide:
 
 - remote proof services
 - policy/configuration plugins
-- a `.pi-proof.yml` parser
+- a `.pi-verity.yml` parser
 - runtime browser/UI orchestration
 - provider-specific semantics
 - cryptographic signatures or remote attestation

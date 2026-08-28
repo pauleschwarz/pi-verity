@@ -10,13 +10,13 @@ For reproducible bugs, open a bug report using the repository issue template.
 
 Please include:
 
-- `pi-proof` version/commit
+- `pi-verity` version/commit
 - Pi version
 - Node.js version
 - OS
 - repository ecosystem
-- relevant `PI_PROOF_*` environment settings
-- `/proof receipt` output with secrets removed
+- relevant `PI_VERITY_*` environment settings
+- `/verity receipt` output with secrets removed
 - minimal reproduction when possible
 
 ## Security issues

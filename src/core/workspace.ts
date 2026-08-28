@@ -28,7 +28,7 @@ async function measuredSize(path: string, limit: number): Promise<number> {
 export async function createIsolatedWorkspace(
   source: string,
   maxBytes = DEFAULT_MAX_WORKSPACE_BYTES,
-  prefix = "pi-proof-",
+  prefix = "pi-verity-",
 ): Promise<IsolatedWorkspace> {
   await measuredSize(source, maxBytes);
   const parent = await mkdtemp(join(tmpdir(), prefix));
@@ -66,7 +66,7 @@ export async function captureCounterfactualBaseline(
   const workspace = await createIsolatedWorkspace(
     repositoryRoot,
     maxBytes,
-    "pi-proof-baseline-",
+    "pi-verity-baseline-",
   );
   return { ...workspace, repository_root: repositoryRoot };
 }

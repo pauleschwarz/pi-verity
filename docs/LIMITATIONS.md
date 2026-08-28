@@ -1,6 +1,6 @@
 # Limitations
 
-`pi-proof` deliberately avoids claims it cannot justify.
+`pi-verity` deliberately avoids claims it cannot justify.
 
 ## Selected checks are not total correctness
 
@@ -42,11 +42,11 @@ Signals can detect recognizable skips, deletions, suppressions, dependency chang
 
 ## No shipped repository policy file
 
-There is no `.pi-proof.yml` parser, custom command matrix, protected-path policy, or plugin interface. Configuration is limited to documented environment variables and CLI limits.
+There is no `.pi-verity.yml` parser, custom command matrix, protected-path policy, or plugin interface. Configuration is limited to documented environment variables and CLI limits.
 
 ## Local receipts are not attestation
 
-Receipts are not cryptographically signed. A user with filesystem access can modify them. `/proof` detects repository-state staleness, but external consumers remain responsible for artifact integrity.
+Receipts are not cryptographically signed. A user with filesystem access can modify them. `/verity` detects repository-state staleness, but external consumers remain responsible for artifact integrity.
 
 ## Models remain fallible
 

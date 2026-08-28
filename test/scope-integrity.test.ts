@@ -50,7 +50,7 @@ async function materialize(
 
 for (const fixture of fixtureCases) {
   test(`scope fixture: ${fixture.name}`, async () => {
-    const parent = await mkdtemp(join(tmpdir(), "pi-proof-scope-"));
+    const parent = await mkdtemp(join(tmpdir(), "pi-verity-scope-"));
     temporaryDirectories.push(parent);
     const before = join(parent, "before");
     const after = join(parent, "after");
@@ -87,7 +87,7 @@ for (const fixture of fixtureCases) {
 test("dependency evidence is precise and does not claim necessity", async () => {
   const fixture = fixtureCases[0];
   assert.ok(fixture);
-  const parent = await mkdtemp(join(tmpdir(), "pi-proof-scope-wording-"));
+  const parent = await mkdtemp(join(tmpdir(), "pi-verity-scope-wording-"));
   temporaryDirectories.push(parent);
   const before = join(parent, "before");
   const after = join(parent, "after");
@@ -112,7 +112,7 @@ test("dependency evidence is precise and does not claim necessity", async () => 
 });
 
 test("non-version dependency specifiers are redacted from evidence", async () => {
-  const parent = await mkdtemp(join(tmpdir(), "pi-proof-scope-redact-"));
+  const parent = await mkdtemp(join(tmpdir(), "pi-verity-scope-redact-"));
   temporaryDirectories.push(parent);
   const before = join(parent, "before");
   const after = join(parent, "after");
@@ -145,7 +145,7 @@ test("repository-relative paths cannot escape the analyzed roots", async () => {
 });
 
 test("broad spread warns but does not fail based on patch size", async () => {
-  const parent = await mkdtemp(join(tmpdir(), "pi-proof-scope-broad-"));
+  const parent = await mkdtemp(join(tmpdir(), "pi-verity-scope-broad-"));
   temporaryDirectories.push(parent);
   const before = join(parent, "before");
   const after = join(parent, "after");

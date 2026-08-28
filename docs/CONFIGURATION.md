@@ -1,10 +1,10 @@
 # Configuration
 
-`pi-proof` is zero-config by default. This page documents only configuration that exists in the current implementation.
+`pi-verity` is zero-config by default. This page documents only configuration that exists in the current implementation.
 
 ## Pi adapter environment
 
-### `PI_PROOF_MAX_REPAIR_ATTEMPTS`
+### `PI_VERITY_MAX_REPAIR_ATTEMPTS`
 
 Maximum automatic same-agent follow-up turns after consecutive deterministic `FAIL` receipts.
 
@@ -17,15 +17,15 @@ Maximum automatic same-agent follow-up turns after consecutive deterministic `FA
 The counter resets after a non-`FAIL` receipt. Reaching the limit queues the bounded evidence for the same session without triggering another turn.
 
 ```bash
-PI_PROOF_MAX_REPAIR_ATTEMPTS=1 pi
+PI_VERITY_MAX_REPAIR_ATTEMPTS=1 pi
 ```
 
-### `PI_PROOF_ALLOW_COUNTERFACTUAL_NETWORK`
+### `PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK`
 
 Set exactly to `1` to allow network during counterfactual runs. If unset, counterfactual execution requests network denial. On macOS this is enforced by the platform runner; unsupported platforms report network policy as unavailable instead of claiming isolation.
 
 ```bash
-PI_PROOF_ALLOW_COUNTERFACTUAL_NETWORK=1 pi
+PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK=1 pi
 ```
 
 This variable does not restrict the repository's normal selected verification command. Repository commands are trusted code and can access the network.
@@ -33,7 +33,7 @@ This variable does not restrict the repository's normal selected verification co
 ## CLI options
 
 ```text
-pi-proof verify [repository]
+pi-verity verify [repository]
   [--output receipt.json]
   [--timeout-ms N]
   [--max-output-bytes N]
@@ -53,10 +53,10 @@ The current implementation does not accept custom repository commands. It conser
 3. Rust: `cargo test`.
 4. Go: `go test ./...`.
 
-Potentially destructive Node script text is rejected. `pi-proof` never installs missing dependencies.
+Potentially destructive Node script text is rejected. `pi-verity` never installs missing dependencies.
 
-## Unsupported configuration
+## Repository configuration
 
-There is currently no `.pi-proof.yml`, `.pi-proof.json`, or TOML parser. The example YAML from the design-stage documentation is intentionally not shipped because silently documenting unsupported keys would be unsafe.
+Repository configuration discovery is not shipped in `0.1.0`. `.pi-verity.yml` is reserved as the single canonical future filename, but it is not parsed or silently accepted today. No legacy configuration alias is supported because the project has not been publicly released.
 
-Future repository configuration must be schema-validated, show selected commands in receipts, reject unknown keys, and treat configuration changes as proof-relevant evidence before it can be documented as available.
+A future repository configuration surface must be schema-validated, show selected commands in receipts, reject unknown keys, and treat configuration changes as proof-relevant evidence before it can be documented as available.

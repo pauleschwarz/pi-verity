@@ -10,7 +10,7 @@ export interface RunOptions {
 }
 
 class BoundedCapture {
-  private readonly marker = Buffer.from("\n... output truncated by pi-proof ...\n");
+  private readonly marker = Buffer.from("\n... output truncated by pi-verity ...\n");
   private readonly headLimit: number;
   private readonly tailLimit: number;
   private head = Buffer.alloc(0);

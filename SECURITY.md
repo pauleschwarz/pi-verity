@@ -15,7 +15,7 @@ Please **do not open a public issue** for a vulnerability that could:
 - corrupt proof receipts
 - bypass a blocking verification policy
 
-Use [GitHub private vulnerability reporting](https://github.com/pauleschwarz/pi-proof/security/advisories/new) after it is enabled for the repository.
+Use [GitHub private vulnerability reporting](https://github.com/pauleschwarz/pi-verity/security/advisories/new) after it is enabled for the repository.
 
 If private vulnerability reporting is not enabled, the maintainer should configure a dedicated security contact before the first public stable release.
 
@@ -34,7 +34,7 @@ Do not include real secrets.
 
 ## Security model
 
-`pi-proof` is not an OS sandbox.
+`pi-verity` is not an OS sandbox.
 
 Repository test/build scripts can execute arbitrary code with the user's privileges.
 

@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-`pi-proof` verifies repository state and deterministic command evidence. It does not evaluate models as model objects.
+`pi-verity` verifies repository state and deterministic command evidence. It does not evaluate models as model objects.
 
 The core is independent of:
 
@@ -19,10 +19,10 @@ The core is independent of:
 It captures a baseline before an agent turn, observes repository-capable tools, verifies after the agent settles, and exposes:
 
 ```text
-/proof
-/proof run
-/proof why
-/proof receipt
+/verity
+/verity run
+/verity why
+/verity receipt
 ```
 
 Successful automatic verification is quiet. Warnings and failures are concise. A deterministic `FAIL` sends bounded evidence to the same Pi session agent and may trigger at most the configured number of follow-up repair turns. No secondary agent is created.

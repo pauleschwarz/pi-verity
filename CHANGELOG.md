@@ -4,10 +4,16 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the unreleased project, package, CLI, Pi commands, environment variables, receipt storage, metadata, and documentation to Pi Verity / `pi-verity`.
+- Positioned Pi Verity as a model-agnostic execution gate that turns coding-agent patches into evidence-backed changes.
+- Reserved `.pi-verity.yml` as the sole future repository-configuration filename; no parser or legacy alias is shipped.
+
 ### Added
 
 - Distributable Pi package manifest with a compiled extension and CLI.
-- `/proof`, `/proof run`, `/proof why`, and `/proof receipt`.
+- `/verity`, `/verity run`, `/verity why`, and `/verity receipt`.
 - Quiet successful verification and bounded warning/failure summaries.
 - Same-agent deterministic failure evidence with configurable repair limits.
 - Stale-receipt detection for current-verdict commands.
@@ -27,5 +33,5 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Known limitations
 
-- npm distribution is configured as `@pauleschwarz/pi-proof`; publication remains manual and has not occurred.
+- npm distribution is configured as `@pauleschwarz/pi-verity`; publication remains manual and has not occurred.
 - Cross-platform network isolation and complete detached process-tree cleanup are not guaranteed.
