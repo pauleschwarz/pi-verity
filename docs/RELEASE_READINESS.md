@@ -21,7 +21,7 @@ The implementation is a high-quality local/Git **pre-release candidate** and pas
 
 The scoped npm name returned `E404` on 2026-08-28 and is therefore not currently published. The unscoped `pi-proof` name remains a different package maintained by `kreek`; this does not prevent the GitHub repository name or scoped npm name selected above.
 
-Public release is still gated on creating the remote repository, observing GitHub CI, confirming npm scope authorization, and installing from an immutable tag. The local repository is initialized on `main`; its initial release-candidate commit uses the owner-provided GitHub noreply identity for `pauleschwarz`. `npm whoami` currently returns `ENEEDAUTH`, so registry authorization is not available in this environment. No package or remote repository was published, created, pushed, or tagged.
+Public release is still gated on pushing the release candidate, observing GitHub CI, confirming npm scope authorization, and installing from an immutable tag. The local repository is initialized on `main`; its initial release-candidate commit uses the owner-provided GitHub noreply identity for `pauleschwarz`. An empty private repository now exists at `pauleschwarz/pi-proof` and is configured locally as `origin`, but no commit has been pushed. `npm whoami` currently returns `ENEEDAUTH`, so registry authorization is not available in this environment. No package, commit, tag, or release was published.
 
 ## Quality gates
 
@@ -146,7 +146,8 @@ Required before public release:
 - [ ] authenticate npm (`npm whoami` currently returns `ENEEDAUTH`) and confirm publish access to the `@pauleschwarz` scope
 - [x] initialize local Git on `main`, exclude internal research/archive material, and review the intended public file set
 - [x] configure the owner-provided GitHub noreply commit identity and create the initial local commit
-- [ ] create the GitHub repository and push explicitly
+- [x] create the empty private GitHub repository and configure it as `origin`
+- [ ] push the release candidate explicitly
 - [ ] enable private vulnerability reporting
 - [ ] observe CI passing on Node 20 and 22 in GitHub
 - [ ] install from the actual immutable GitHub tag
