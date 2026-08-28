@@ -6,7 +6,7 @@ for normal use.
 ## 1. Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.0
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.1
 ```
 
 This loads the Pi extension from the immutable GitHub release tag. npm

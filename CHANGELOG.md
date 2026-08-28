@@ -2,6 +2,28 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## [0.1.1] - 2026-08-28
+
+### Changed
+
+- Automatic repair is passive by default: `PI_VERITY_MAX_REPAIR_ATTEMPTS` defaults to `0` and invalid values fall back to `0`.
+- `/verity doctor` reports whether automatic repair is disabled or enabled (limit N).
+- README and onboarding docs lead with tag install, `/verity doctor`, the aha sequence, and evidence links; technical detail stays below the fold.
+- Documented automatic repair as explicit opt-in only.
+
+### Added
+
+- `docs/GETTING_STARTED.md` five-step first-use path.
+- `docs/evidence/README.md` public evidence index.
+- `docs/evidence/provider-independence.md` with honest `BLOCKED` result when only one local provider route is configured.
+- `scripts/evidence/benchmark.ts` plus recorded `docs/evidence/performance.md` / `performance.json` for no-change, small-patch, deterministic-proof, and counterfactual-proof timings (0 LLM calls on the deterministic path).
+- Lifecycle coverage for the passive repair default.
+
+### Notes
+
+- Install from the immutable Git tag `v0.1.1`. npm publication remains unauthorized/unclaimed.
+- The immutable `v0.1.0` tag is unchanged.
+
 ## [0.1.0] - 2026-08-28
 
 ### Changed

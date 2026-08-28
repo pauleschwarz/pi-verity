@@ -16,7 +16,7 @@ deterministic gate over repository state and repository-defined checks.
 ## 60-second start
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.0
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.1
 ```
 
 Then, inside a Git repository:

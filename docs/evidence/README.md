@@ -11,6 +11,8 @@ recorded once, or explicitly blocked.
 | [provider-independence.md](./provider-independence.md) | blocked | `BLOCKED` | Two-provider independence check; only one local OmniRoute provider was configured, so no independence run was performed |
 | [performance.md](./performance.md) | recorded | measured on one machine | Wall-clock median/P95 for no-change, small patch, deterministic proof, and counterfactual proof; 0 LLM calls/tokens on the deterministic path |
 | [performance.json](./performance.json) | recorded | raw output of the benchmark | Machine-readable companion to `performance.md` |
+| [readme-truth-audit.md](./readme-truth-audit.md) | recorded | release audit | README claims labeled proven / limited / planned / blocked |
+| [integration-audit-v0.1.1.md](./integration-audit-v0.1.1.md) | recorded | release audit | Full automated + manual gate log for v0.1.1 |
 
 ## How to regenerate performance evidence
 

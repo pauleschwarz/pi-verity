@@ -61,6 +61,6 @@ Potentially destructive Node script text is rejected. `pi-verity` never installs
 
 ## Repository configuration
 
-Repository configuration discovery is not shipped in `0.1.0`. `.pi-verity.yml` is reserved as the single canonical future filename, but it is not parsed or silently accepted today. No legacy configuration alias is supported because the project has not been publicly released.
+Repository configuration discovery is not shipped in `0.1.x`. `.pi-verity.yml` is reserved as the single canonical future filename, but it is not parsed or silently accepted today. No legacy configuration alias is supported because the project has not been publicly released.
 
 A future repository configuration surface must be schema-validated, show selected commands in receipts, reject unknown keys, and treat configuration changes as proof-relevant evidence before it can be documented as available.
