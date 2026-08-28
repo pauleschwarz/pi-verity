@@ -69,6 +69,7 @@ async function verify(
     ...capture,
     timeoutMs,
     maxWorkspaceBytes: 16 * 1024 * 1024,
+    allowCounterfactualNetwork: true,
   });
 }
 
@@ -83,6 +84,7 @@ test("a useful regression test is proven RED on baseline and GREEN on candidate"
   await writeFile(join(root, "test", "behavior.test.js"), usefulTest);
   const receipt = await verify(root, capture);
   assert.equal(receipt.counterfactual?.classification, "PROVEN_REGRESSION");
+  assert.equal(receipt.counterfactual?.network_policy, "explicitly_allowed");
   assert.notEqual(receipt.counterfactual?.baseline_result?.exit_code, 0);
   assert.equal(receipt.counterfactual?.candidate_result?.exit_code, 0);
   assert.equal(receipt.verdict, "PASS");

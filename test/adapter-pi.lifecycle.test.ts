@@ -105,6 +105,8 @@ async function cleanupReceipts(paths: string[]): Promise<void> {
 test("automatic repair keeps an exact counterfactual baseline", async () => {
   const root = await createFixture();
   const fake = fakePi();
+  const previousNetwork = process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK;
+  process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = "1";
   piVerity(fake.api);
   const context = fake.context(root);
   try {
@@ -133,6 +135,11 @@ test("automatic repair keeps an exact counterfactual baseline", async () => {
     assert.equal(receipt.counterfactual?.classification, "PROVEN_REGRESSION");
     assert.equal(receipt.scope_integrity.baseline_source, "exact_workspace");
   } finally {
+    if (previousNetwork === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK");
+    } else {
+      process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = previousNetwork;
+    }
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
     await rm(root, { recursive: true, force: true });
