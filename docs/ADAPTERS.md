@@ -23,9 +23,10 @@ It captures a baseline before an agent turn, observes repository-capable tools, 
 /verity run
 /verity why
 /verity receipt
+/verity doctor
 ```
 
-Successful automatic verification is quiet. Warnings and failures are concise. A deterministic `FAIL` sends bounded evidence to the same Pi session agent and may trigger at most the configured number of follow-up repair turns. No secondary agent is created.
+Successful automatic verification is quiet. Warnings and failures are concise. A deterministic `FAIL` always exposes bounded evidence. Automatic same-session repair turns are **opt-in** via `PI_VERITY_MAX_REPAIR_ATTEMPTS` (default `0`). When enabled, at most the configured number of follow-up repair turns may run. No secondary agent is created.
 
 ## Why there are no provider adapters
 

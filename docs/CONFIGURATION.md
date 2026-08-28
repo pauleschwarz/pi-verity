@@ -8,16 +8,20 @@
 
 Maximum automatic same-agent follow-up turns after consecutive deterministic `FAIL` receipts.
 
-- Default: `2`
+- Default: `0` (passive — stop at evidence, no extra LLM turns)
 - Accepted: integer `0..10`
 - `0`: expose evidence without automatically triggering a repair turn
-- Invalid or negative values: fall back to `2`
+- Invalid or negative values: fall back to `0`
 - Values above `10`: clamp to `10`
 
 The counter resets after a non-`FAIL` receipt. Reaching the limit queues the bounded evidence for the same session without triggering another turn.
 
 ```bash
+# opt-in: at most one repair turn after consecutive FAIL
 PI_VERITY_MAX_REPAIR_ATTEMPTS=1 pi
+
+# opt-in: at most two repair turns
+PI_VERITY_MAX_REPAIR_ATTEMPTS=2 pi
 ```
 
 ### `PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK`
