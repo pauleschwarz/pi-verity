@@ -40,5 +40,5 @@ Head before release commit: `88c20d9`
 ## Out of scope / not done
 
 - npm publish (not authorized)
-- Mutating immutable tag `v0.1.0`
+- Mutating published release tag `v0.1.0`
 - Two-provider live independence run
