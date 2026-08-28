@@ -10,6 +10,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 - Positioned Pi Verity as a model-agnostic execution gate that turns coding-agent patches into evidence-backed changes.
 - Reserved `.pi-verity.yml` as the sole future repository-configuration filename; no parser or legacy alias is shipped.
 - Counterfactual test fixtures request network explicitly, so RED/GREEN classification no longer depends on the macOS-only sandbox runner and passes CI on Linux.
+- Updated pinned GitHub Actions to `checkout@v7.0.1`, `setup-node@v7.0.0`, and `upload-artifact@v7.0.1`, and development tooling to Biome `2.5.10`, `@types/node` `26`, and TypeScript `5.9`. TypeScript `7.0.2` was evaluated and rejected: it fails to resolve Node built-in modules under `NodeNext` in this project.
 
 ### Added
 

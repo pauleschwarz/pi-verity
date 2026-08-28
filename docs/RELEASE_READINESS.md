@@ -30,7 +30,7 @@ Public release remains gated on repository visibility, private vulnerability rep
 | Gate | Result | Evidence |
 | --- | --- | --- |
 | Typecheck | PASS | `npm run typecheck` |
-| Lint | PASS | `npm run lint`; Biome checked 18 TypeScript files with no findings |
+| Lint | PASS | `npm run lint`; Biome `2.5.10` checked 18 TypeScript files with no findings |
 | Unit tests | PASS | `npm run test:unit`: 26/26 |
 | Integration tests | PASS | `npm run test:integration`: 25/25 |
 | Full suite | PASS | `npm test`: 51/51 |
@@ -159,7 +159,7 @@ Required before public release:
 - [x] observe CI passing on Node 20 and 22 in GitHub
 - [ ] enable private vulnerability reporting (repository setting; the REST endpoint is unavailable while the repository is private)
 - [ ] decide repository visibility; the repository is intentionally private during ongoing iteration
-- [ ] triage the open Dependabot pull requests, including the major GitHub Action bumps
+- [x] triage the open Dependabot pull requests; Actions v7 and Biome/`@types/node` updates were applied on `main` after a full local gate, while TypeScript `7.0.2` was rejected as incompatible
 - [ ] tag the release candidate and install from the actual immutable GitHub tag
 - [ ] inspect the final tagged tarball and publish manually with provenance
 
