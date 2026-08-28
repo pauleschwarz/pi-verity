@@ -31,3 +31,6 @@ node_modules/
 dist/
 coverage/
 .DS_Store
+
+# Local infinity-harness state (not part of the product release)
+harness/
