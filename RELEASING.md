@@ -69,7 +69,7 @@ git push origin v0.1.0
 ```
 
 1. Create the GitHub release from the generated notes and attach the inspected tarball if useful.
-2. Verify installation from the immutable tag:
+2. Verify installation from the protected release tag:
 
 ```bash
 pi install git:github.com/pauleschwarz/pi-verity@v0.1.0
@@ -87,6 +87,19 @@ npm publish
 ```
 
 `prepublishOnly` reruns verification. `publishConfig` requests public access and npm provenance. Publishing remains a manual command; inspect the final confirmation and resulting registry page.
+
+## Release integrity
+
+Published versions are append-only. Never move an existing version tag; publish a new patch release.
+
+Enforced state on `pauleschwarz/pi-verity`:
+
+- `v*` tags identify the exact commit that passed the release gate for that version.
+- The repository ruleset `release-tag-protection` blocks update, non-fast-forward, and deletion of `refs/tags/v*`.
+- The repository ruleset `main-protection` blocks force-push and deletion of `main` and requires the CI checks `verify (20)` and `verify (22)`.
+- A published tag is never repointed. Any fix ships as a new patch version with its own tag.
+
+What this is not: repository rules prevent mutation of refs, they do not provide cryptographic authenticity. Tags in this repository are currently unsigned, there is no artifact attestation, and the GitHub Release API still reports `immutable: false` for existing releases. Do not describe releases as cryptographically attested or as GitHub-native immutable releases.
 
 ## Release notes
 

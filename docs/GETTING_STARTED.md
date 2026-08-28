@@ -9,7 +9,7 @@ for normal use.
 pi install git:github.com/pauleschwarz/pi-verity@v0.1.1
 ```
 
-This loads the Pi extension from the immutable GitHub release tag. npm
+This loads the Pi extension from the protected GitHub release tag. npm
 publication is not claimed.
 
 ## 2. Check
@@ -90,7 +90,7 @@ pi-verity verify . --output proof-receipt.json
 
 ## Next reading
 
-- [Evidence index](evidence/README.md)
+- [Evidence index](./evidence/README.md)
 - [Configuration](CONFIGURATION.md)
 - [Proof model](PROOF_MODEL.md)
 - [Limitations](LIMITATIONS.md)
