@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pi-proof:schema:proof-receipt:v3",
+  "title": "pi-proof ProofReceipt v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "session_id",
+    "repository_root",
+    "created_at",
+    "baseline",
+    "final_diff_hash",
+    "changed_files",
+    "repository_changed_since_baseline",
+    "verification_commands",
+    "counterfactual",
+    "scope_integrity",
+    "warnings",
+    "unverified_dimensions",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": { "const": 3 },
+    "task_id": { "type": ["string", "null"] },
+    "session_id": { "type": ["string", "null"] },
+    "repository_root": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "baseline": {
+      "oneOf": [{ "$ref": "#/$defs/gitSnapshot" }, { "type": "null" }]
+    },
+    "final_diff_hash": { "type": ["string", "null"] },
+    "changed_files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "repository_changed_since_baseline": { "type": "boolean" },
+    "verification_commands": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/commandResult" }
+    },
+    "counterfactual": {
+      "oneOf": [
+        { "$ref": "#/$defs/counterfactualEvidence" },
+        { "type": "null" }
+      ]
+    },
+    "scope_integrity": { "$ref": "#/$defs/scopeIntegrity" },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "unverified_dimensions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "verdict": {
+      "enum": ["PASS", "PASS_WITH_WARNINGS", "FAIL", "UNPROVEN"]
+    }
+  },
+  "$defs": {
+    "gitSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha",
+        "status_hash",
+        "state_hash",
+        "dirty",
+        "status_porcelain_v2"
+      ],
+      "properties": {
+        "sha": { "type": ["string", "null"] },
+        "status_hash": { "type": "string" },
+        "state_hash": { "type": "string" },
+        "dirty": { "type": "boolean" },
+        "status_porcelain_v2": { "type": "string" }
+      }
+    },
+    "commandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "kind",
+        "command",
+        "cwd",
+        "exit_code",
+        "duration_ms",
+        "stdout",
+        "stderr",
+        "stdout_truncated",
+        "stderr_truncated",
+        "timed_out",
+        "cancelled"
+      ],
+      "properties": {
+        "source": {
+          "enum": ["package.json", "pyproject.toml", "Cargo.toml", "go.mod"]
+        },
+        "kind": { "enum": ["test", "check", "lint"] },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "cwd": { "type": "string" },
+        "exit_code": { "type": ["integer", "null"] },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "stdout": { "type": "string" },
+        "stderr": { "type": "string" },
+        "stdout_truncated": { "type": "boolean" },
+        "stderr_truncated": { "type": "boolean" },
+        "timed_out": { "type": "boolean" },
+        "cancelled": { "type": "boolean" }
+      }
+    },
+    "antiGamingSignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "file", "detail"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "TEST_SKIPPED",
+            "ASSERTION_REMOVED",
+            "TEST_DELETED",
+            "SUPPRESSION_INTRODUCED",
+            "UNCONDITIONAL_SUCCESS"
+          ]
+        },
+        "file": { "type": "string" },
+        "detail": { "type": "string" }
+      }
+    },
+    "counterfactualEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "candidate_test_files",
+        "command",
+        "baseline_result",
+        "candidate_result",
+        "anti_gaming_signals",
+        "network_policy",
+        "workspace_bytes",
+        "diagnosis"
+      ],
+      "properties": {
+        "classification": {
+          "enum": [
+            "PROVEN_REGRESSION",
+            "NON_DISCRIMINATING_TEST",
+            "BASELINE_UNAVAILABLE",
+            "TEST_NOT_PORTABLE",
+            "CANDIDATE_FAILS",
+            "INCONCLUSIVE"
+          ]
+        },
+        "candidate_test_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "command": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string" }
+            },
+            { "type": "null" }
+          ]
+        },
+        "baseline_result": {
+          "oneOf": [{ "$ref": "#/$defs/commandResult" }, { "type": "null" }]
+        },
+        "candidate_result": {
+          "oneOf": [{ "$ref": "#/$defs/commandResult" }, { "type": "null" }]
+        },
+        "anti_gaming_signals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/antiGamingSignal" }
+        },
+        "network_policy": {
+          "enum": ["denied", "explicitly_allowed", "unavailable"]
+        },
+        "workspace_bytes": { "type": "integer", "minimum": 0 },
+        "diagnosis": { "type": "string" }
+      }
+    },
+    "scopeSignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "file", "observed", "why", "evidence"],
+      "properties": {
+        "severity": { "enum": ["FAIL", "WARNING", "INFORMATION"] },
+        "code": {
+          "enum": [
+            "SCOPE_DEPENDENCY_ADDED",
+            "SCOPE_LOCKFILE_CHANGED",
+            "SCOPE_TEST_DELETED",
+            "SCOPE_TEST_SKIPPED",
+            "SCOPE_LINT_SUPPRESSION_ADDED",
+            "SCOPE_TYPE_SUPPRESSION_ADDED",
+            "SCOPE_GENERATED_FILE_MODIFIED",
+            "SCOPE_PACKAGE_BUILD_CONFIG_MODIFIED",
+            "SCOPE_MIGRATION_MODIFIED",
+            "SCOPE_PUBLIC_API_CHANGED",
+            "SCOPE_SECRET_LIKE_FILE_ADDED",
+            "SCOPE_BINARY_ADDED",
+            "SCOPE_BROAD_FILE_SPREAD"
+          ]
+        },
+        "file": { "type": "string" },
+        "observed": { "type": "string" },
+        "why": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "scopeIntegrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "baseline_source",
+        "analyzed_files",
+        "task_touched",
+        "signals",
+        "reason"
+      ],
+      "properties": {
+        "available": { "type": "boolean" },
+        "baseline_source": {
+          "enum": ["exact_workspace", "git_commit", "unavailable"]
+        },
+        "analyzed_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "task_touched": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "signals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scopeSignal" }
+        },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

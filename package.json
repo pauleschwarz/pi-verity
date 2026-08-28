@@ -1,0 +1,88 @@
+{
+  "name": "@pauleschwarz/pi-proof",
+  "version": "0.1.0",
+  "description": "Proof-carrying patches for coding agents.",
+  "type": "module",
+  "author": "Paul Schwarz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pauleschwarz/pi-proof.git"
+  },
+  "homepage": "https://github.com/pauleschwarz/pi-proof#readme",
+  "bugs": {
+    "url": "https://github.com/pauleschwarz/pi-proof/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "bin": {
+    "pi-proof": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/core/index.js",
+    "./adapter-pi": "./dist/adapter-pi/index.js"
+  },
+  "pi": {
+    "extensions": [
+      "./dist/adapter-pi/index.js"
+    ]
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "docs/ADAPTERS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CONFIGURATION.md",
+    "docs/COUNTERFACTUAL_VERIFICATION.md",
+    "docs/DESIGN_PRINCIPLES.md",
+    "docs/FAQ.md",
+    "docs/LIMITATIONS.md",
+    "docs/PROOF_MODEL.md",
+    "docs/RELEASE_READINESS.md",
+    "docs/THREAT_MODEL.md",
+    "examples/README.md",
+    "README.md",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "RELEASING.md",
+    "ROADMAP.md",
+    "SECURITY.md",
+    "SUPPORT.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "biome check src test",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run verify",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:unit": "node --import tsx --test test/adapter-pi.test.ts test/scope-integrity.test.ts",
+    "test:integration": "node --import tsx --test test/adapter-pi.lifecycle.test.ts test/counterfactual.test.ts test/verifier.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "coding-agent",
+    "verification",
+    "counterfactual-testing",
+    "proof-receipt"
+  ],
+  "license": "MIT",
+  "packageManager": "npm@10.9.8",
+  "devDependencies": {
+    "@biomejs/biome": "2.2.2",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "smol-toml": "^1.8.0"
+  }
+}

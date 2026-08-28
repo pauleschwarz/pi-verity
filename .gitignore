@@ -1,0 +1,26 @@
+# Local verification output
+.receipts/
+artifacts/
+.brain-runtime/
+*.receipt.json
+*.receipt.jsonl
+*.tgz
+pi-proof-github-docs.zip
+
+# Internal research/source material (not part of the public repository)
+raw/
+proposal/
+evidence/
+docs/pi-api-reference.md
+docs/research-findings.md
+
+# Secrets/local config
+.env
+.env.*
+!.env.example
+
+# Runtime/build output
+node_modules/
+dist/
+coverage/
+.DS_Store

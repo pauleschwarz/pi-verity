@@ -1,0 +1,71 @@
+name: Bug report
+description: Report incorrect pi-proof behavior
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please remove secrets and proprietary source code from logs/receipts.
+
+  - type: input
+    id: version
+    attributes:
+      label: pi-proof version
+      placeholder: v0.x.x or commit SHA
+    validations:
+      required: true
+
+  - type: input
+    id: pi_version
+    attributes:
+      label: Pi version
+      description: Required only for Pi adapter or slash-command issues.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node.js version, repository ecosystem
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include commands or a minimal fixture repository where possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: receipt
+    attributes:
+      label: Proof receipt
+      description: Paste a redacted /proof receipt if available.
+      render: json
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: I removed secrets and proprietary code from this report.
+          required: true
+        - label: This is not a security vulnerability that should be privately disclosed.
+          required: true
