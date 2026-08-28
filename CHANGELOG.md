@@ -21,8 +21,8 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Notes
 
-- Install from the immutable Git tag `v0.1.1`. npm publication remains unauthorized/unclaimed.
-- The immutable `v0.1.0` tag is unchanged.
+- Install from the protected Git tag `v0.1.1`. npm publication remains unauthorized/unclaimed.
+- The `v0.1.0` tag is unchanged.
 
 ## [0.1.0] - 2026-08-28
 

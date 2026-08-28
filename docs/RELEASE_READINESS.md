@@ -6,7 +6,7 @@
 
 **Local environment:** macOS, Node `22.23.2`, npm `10.9.8`, Pi `0.84.3`
 
-**Publication action taken:** repository made public; immutable `v0.1.0` tag pushed; GitHub Release published; no npm publication
+**Publication action taken:** repository made public; `v0.1.0` release tag pushed; GitHub Release published; no npm publication
 
 ## Verdict
 
@@ -21,7 +21,7 @@ The implementation is a high-quality local/Git v0.1 release and passes the local
 
 The scoped npm name returned `E404` on 2026-08-28 and is therefore not currently published.
 
-The canonical repository is public at `pauleschwarz/pi-verity`. History was squashed to one clean release commit, and `main` plus immutable tag `v0.1.0` are pushed. Repository description and topics are set, GitHub CI and the manual release check passed on the cleaned head, and a fresh anonymous tag checkout passed verify and package dry-run. Vulnerability alerts are enabled. GitHub Release `v0.1.0` is published at https://github.com/pauleschwarz/pi-verity/releases/tag/v0.1.0; no npm package was published.
+The canonical repository is public at `pauleschwarz/pi-verity`. History was squashed to one clean release commit, and `main` plus release tag `v0.1.0` are pushed. Repository description and topics are set, GitHub CI and the manual release check passed on the cleaned head, and a fresh anonymous tag checkout passed verify and package dry-run. Vulnerability alerts are enabled. GitHub Release `v0.1.0` is published at <https://github.com/pauleschwarz/pi-verity/releases/tag/v0.1.0>; no npm package was published.
 
 The remaining optional publication action is separately authorized npm publication.
 
@@ -150,7 +150,7 @@ Completed identity decisions:
 
 Release actions and non-blocking follow-ups:
 
-- [x] GitHub Release `v0.1.0` published at https://github.com/pauleschwarz/pi-verity/releases/tag/v0.1.0
+- [x] GitHub Release `v0.1.0` published at <https://github.com/pauleschwarz/pi-verity/releases/tag/v0.1.0>
 - [ ] npm publication: requires npm authentication and separate explicit authorization
 
 - [ ] authenticate npm (`npm whoami` currently returns `ENEEDAUTH`) and confirm publish access to the `@pauleschwarz` scope
@@ -163,7 +163,7 @@ Release actions and non-blocking follow-ups:
 - [x] enable GitHub vulnerability alerts
 - [x] decide repository visibility and change the repository to public after the final public-state gate
 - [x] triage the open Dependabot pull requests; equivalent updates were applied on `main`, while TypeScript `7.0.2` was rejected as incompatible
-- [x] tag the release and install from the actual immutable GitHub tag `v0.1.0`
+- [x] tag the release and install from the actual GitHub release tag `v0.1.0`
 - [x] inspect the tagged tarball; package identity and legacy-name scan passed
 - [ ] authenticate npm and publish manually with provenance (only if explicitly approved)
 
