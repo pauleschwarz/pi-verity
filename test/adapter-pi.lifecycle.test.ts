@@ -105,7 +105,9 @@ async function cleanupReceipts(paths: string[]): Promise<void> {
 test("automatic repair keeps an exact counterfactual baseline", async () => {
   const root = await createFixture();
   const fake = fakePi();
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
   const previousNetwork = process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK;
+  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "1";
   process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = "1";
   piVerity(fake.api);
   const context = fake.context(root);
@@ -135,10 +137,42 @@ test("automatic repair keeps an exact counterfactual baseline", async () => {
     assert.equal(receipt.counterfactual?.classification, "PROVEN_REGRESSION");
     assert.equal(receipt.scope_integrity.baseline_source, "exact_workspace");
   } finally {
+    if (previousLimit === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+    } else {
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
+    }
     if (previousNetwork === undefined) {
       Reflect.deleteProperty(process.env, "PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK");
     } else {
       process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = previousNetwork;
+    }
+    await fake.events.get("session_shutdown")?.({}, context);
+    await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("unset repair limit is passive by default", async () => {
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+  const root = await createFixture();
+  const fake = fakePi();
+  piVerity(fake.api);
+  const context = fake.context(root);
+  try {
+    await fake.events.get("session_start")?.({}, context);
+    await writeFile(join(root, ".env"), "EXAMPLE_ONLY=1\n");
+    await fake.events.get("tool_call")?.({ toolName: "write" }, context);
+    await fake.events.get("agent_settled")?.({}, context);
+
+    assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
+    assert.equal(fake.messages.at(-1)?.options?.triggerTurn, false);
+  } finally {
+    if (previousLimit === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+    } else {
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
     }
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
@@ -227,6 +261,7 @@ test("doctor command reports local readiness", async () => {
   try {
     await fake.commands.get("verity")?.("doctor", context);
     assert.match(fake.notices[0] ?? "", /Ready\./);
+    assert.match(fake.notices[0] ?? "", /automatic repair: disabled/);
     assert.equal(fake.entries.length, 0);
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);

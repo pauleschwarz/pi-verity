@@ -74,10 +74,17 @@ function taskId(sessionId: string | undefined, sequence: number): string {
 
 function configuredRepairLimit(): number {
   const configured = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
-  if (configured === undefined) return 2;
+  if (configured === undefined) return 0;
   const parsed = Number(configured);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) return 2;
+  if (!Number.isSafeInteger(parsed) || parsed < 0) return 0;
   return Math.min(parsed, 10);
+}
+
+function repairStatus(): string {
+  const limit = configuredRepairLimit();
+  return limit === 0
+    ? "automatic repair: disabled"
+    : `automatic repair: enabled (limit ${limit})`;
 }
 
 function commandLabel(result: CommandResult): string {
@@ -512,7 +519,7 @@ class PiVerityRuntime {
       try {
         const report = await runDoctor(context.cwd ?? process.cwd());
         context.ui?.notify?.(
-          formatDoctorReport(report),
+          `${formatDoctorReport(report)}\n${repairStatus()}`,
           report.ready ? "info" : "error",
         );
       } catch (error) {
