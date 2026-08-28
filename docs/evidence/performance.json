@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "generated_at": "2026-08-28T20:06:14.162Z",
+    "node": "v22.23.2",
+    "npm": "10.9.8",
+    "git": "git version 2.55.0",
+    "pi": "0.84.3",
+    "commit": "231236e3cb2c039c36a516c0522e45fb574daeb3",
+    "os": "darwin 25.5.0 arm64",
+    "cpu": "Apple M5",
+    "cpu_count": 10,
+    "fixture_bytes_after_setup": 32250,
+    "sample_count": 5,
+    "llm_calls": 0,
+    "llm_tokens": 0,
+    "llm_note": "Deterministic verifier run; no Pi session or LLM request was used."
+  },
+  "scenarios": {
+    "no-change": {
+      "samples": [
+        {
+          "duration_ms": 19,
+          "verification_subprocesses": 0,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 19,
+          "verification_subprocesses": 0,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 19,
+          "verification_subprocesses": 0,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 19,
+          "verification_subprocesses": 0,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 17,
+          "verification_subprocesses": 0,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        }
+      ],
+      "wall_clock_ms": {
+        "median": 19,
+        "p95": 19
+      },
+      "verification_subprocesses": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "workspace_bytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "small-source-patch": {
+      "samples": [
+        {
+          "duration_ms": 231,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 213,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 215,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 213,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 216,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        }
+      ],
+      "wall_clock_ms": {
+        "median": 215,
+        "p95": 231
+      },
+      "verification_subprocesses": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "workspace_bytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "deterministic-proof": {
+      "samples": [
+        {
+          "duration_ms": 217,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 215,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 219,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 218,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        },
+        {
+          "duration_ms": 214,
+          "verification_subprocesses": 1,
+          "workspace_bytes": 0,
+          "verdict": "PASS",
+          "counterfactual": null
+        }
+      ],
+      "wall_clock_ms": {
+        "median": 217,
+        "p95": 219
+      },
+      "verification_subprocesses": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "workspace_bytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "counterfactual-proof": {
+      "samples": [
+        {
+          "duration_ms": 606,
+          "verification_subprocesses": 3,
+          "workspace_bytes": 517,
+          "verdict": "PASS",
+          "counterfactual": "PROVEN_REGRESSION"
+        },
+        {
+          "duration_ms": 617,
+          "verification_subprocesses": 3,
+          "workspace_bytes": 517,
+          "verdict": "PASS",
+          "counterfactual": "PROVEN_REGRESSION"
+        },
+        {
+          "duration_ms": 607,
+          "verification_subprocesses": 3,
+          "workspace_bytes": 517,
+          "verdict": "PASS",
+          "counterfactual": "PROVEN_REGRESSION"
+        },
+        {
+          "duration_ms": 611,
+          "verification_subprocesses": 3,
+          "workspace_bytes": 517,
+          "verdict": "PASS",
+          "counterfactual": "PROVEN_REGRESSION"
+        },
+        {
+          "duration_ms": 609,
+          "verification_subprocesses": 3,
+          "workspace_bytes": 517,
+          "verdict": "PASS",
+          "counterfactual": "PROVEN_REGRESSION"
+        }
+      ],
+      "wall_clock_ms": {
+        "median": 609,
+        "p95": 617
+      },
+      "verification_subprocesses": [
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "workspace_bytes": [
+        517,
+        517,
+        517,
+        517,
+        517
+      ]
+    }
+  }
+}

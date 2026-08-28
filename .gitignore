@@ -17,6 +17,9 @@ docs/research-findings.md
 # Public verification evidence is included deliberately
 !docs/evidence/
 !docs/evidence/**
+!scripts/
+!scripts/evidence/
+!scripts/evidence/**
 
 # Secrets/local config
 .env
