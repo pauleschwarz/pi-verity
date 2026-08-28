@@ -19,7 +19,7 @@ node dist/cli.js verify . --output proof-receipt.json
 # pi-verity: PASS
 ```
 
-> **Release status:** pre-release. Local and Git-package evaluation are supported. The npm package `@pauleschwarz/pi-verity` is configured but not published, and nothing in this repository publishes automatically.
+> **Release status:** pre-release. Local and Git-package evaluation are supported. The repository is currently private, the npm package `@pauleschwarz/pi-verity` is configured but not published, and nothing here publishes automatically.
 
 ## The three questions
 

@@ -9,6 +9,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 - Renamed the unreleased project, package, CLI, Pi commands, environment variables, receipt storage, metadata, and documentation to Pi Verity / `pi-verity`.
 - Positioned Pi Verity as a model-agnostic execution gate that turns coding-agent patches into evidence-backed changes.
 - Reserved `.pi-verity.yml` as the sole future repository-configuration filename; no parser or legacy alias is shipped.
+- Counterfactual test fixtures request network explicitly, so RED/GREEN classification no longer depends on the macOS-only sandbox runner and passes CI on Linux.
 
 ### Added
 
@@ -34,4 +35,5 @@ All notable changes are documented here. The project follows Semantic Versioning
 ### Known limitations
 
 - npm distribution is configured as `@pauleschwarz/pi-verity`; publication remains manual and has not occurred.
+- The GitHub repository is private during ongoing iteration; no tag or release exists.
 - Cross-platform network isolation and complete detached process-tree cleanup are not guaranteed.

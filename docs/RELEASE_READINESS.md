@@ -1,17 +1,17 @@
 # Release Readiness Report
 
-**Assessment date:** 2026-08-27
+**Assessment date:** 2026-08-28
 
 **Candidate:** `0.1.0`
 
 **Local environment:** macOS, Node `22.23.2`, npm `10.9.8`, Pi `0.84.3`
 
-**Publication action taken:** none
+**Publication action taken:** private GitHub repository only; no tag, GitHub release, or npm publication
 
 ## Verdict
 
 ```text
-LOCAL RELEASE GATES PASS — REMOTE RELEASE GATES PENDING
+LOCAL AND PRIVATE-REMOTE GATES PASS — PUBLIC RELEASE GATES PENDING
 ```
 
 The implementation is a high-quality local/Git **pre-release candidate** and passes the local technical gates below. The owner selected these release identities:
@@ -21,7 +21,9 @@ The implementation is a high-quality local/Git **pre-release candidate** and pas
 
 The scoped npm name returned `E404` on 2026-08-28 and is therefore not currently published.
 
-Public release is still gated on creating or safely renaming the target GitHub repository, pushing the release candidate, observing GitHub CI, confirming npm scope authorization, and installing from an immutable tag. The local repository is initialized on `main`; its release-candidate history uses the owner-provided GitHub noreply identity for `pauleschwarz`. The canonical `pauleschwarz/pi-verity` repository does not yet exist. A previously created empty private placeholder under the former project name contains no commits and is not canonical. Remote mutation was intentionally deferred; no package, commit, tag, or release was published.
+The canonical repository now exists at `pauleschwarz/pi-verity`: the earlier empty placeholder was renamed rather than recreated, so no history was discarded. `main` is pushed, the repository remains **private** by owner decision, and its description and topics are set. GitHub CI passed on Node 20 and 22 for the pushed head. No tag, GitHub release, or npm package was published.
+
+Public release remains gated on repository visibility, private vulnerability reporting, npm scope authorization, and an immutable-tag installation check.
 
 ## Quality gates
 
@@ -44,6 +46,8 @@ Public release is still gated on creating or safely renaming the target GitHub r
 | GitHub metadata syntax | PASS | All workflow, issue-template, Dependabot, and release YAML parsed successfully |
 | Model independence fixture | PASS | Identical fixture executed through Pi routes `omniroute/economy` and `omniroute/free`; normalized proof semantics were identical |
 | App proof gate | PASS | `appproof gate` exited `0`; the classifier's JSX-like web heuristic was covered with fresh real-Pi functional evidence and an 80-column TUI layout check |
+| GitHub CI | PASS | Run `33159323127` on `62f753b`: `verify (20)` and `verify (22)` both succeeded through typecheck, lint, unit, integration, build, and pack |
+| Counterfactual portability | PASS | Counterfactual fixtures now request network explicitly, so RED/GREEN classification no longer depends on the macOS-only sandbox runner |
 
 ## Model-independence result
 
@@ -149,12 +153,14 @@ Required before public release:
 - [ ] authenticate npm (`npm whoami` currently returns `ENEEDAUTH`) and confirm publish access to the `@pauleschwarz` scope
 - [x] initialize local Git on `main`, exclude internal research/archive material, and review the intended public file set
 - [x] configure the owner-provided GitHub noreply commit identity and create the initial local commit
-- [ ] create `pauleschwarz/pi-verity` or safely rename the empty private placeholder, then configure it as `origin`
-- [ ] set the GitHub description and accurate repository topics from [`RELEASING.md`](../RELEASING.md)
-- [ ] push the release candidate explicitly
-- [ ] enable private vulnerability reporting
-- [ ] observe CI passing on Node 20 and 22 in GitHub
-- [ ] install from the actual immutable GitHub tag
+- [x] rename the empty private placeholder to `pauleschwarz/pi-verity` and configure it as `origin`
+- [x] set the GitHub description and accurate repository topics from [`RELEASING.md`](../RELEASING.md)
+- [x] push the release candidate explicitly
+- [x] observe CI passing on Node 20 and 22 in GitHub
+- [ ] enable private vulnerability reporting (repository setting; the REST endpoint is unavailable while the repository is private)
+- [ ] decide repository visibility; the repository is intentionally private during ongoing iteration
+- [ ] triage the open Dependabot pull requests, including the major GitHub Action bumps
+- [ ] tag the release candidate and install from the actual immutable GitHub tag
 - [ ] inspect the final tagged tarball and publish manually with provenance
 
 Recommended, not blocking the current local pre-release candidate:
@@ -165,4 +171,4 @@ Recommended, not blocking the current local pre-release candidate:
 
 ## Release decision
 
-The code and package layout pass the local release gates and are ready for the `pauleschwarz/pi-verity` GitHub pre-release process. A public npm or GitHub release must not be claimed until the unchecked authorization/remote gates above are completed.
+The code and package layout pass the local gates and the private GitHub gates, including CI on Node 20 and 22. The repository is deliberately private during ongoing iteration. A public repository, GitHub release, or npm publication must not be claimed until the unchecked gates above are completed.
