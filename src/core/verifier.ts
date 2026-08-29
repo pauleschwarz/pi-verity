@@ -237,7 +237,8 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
 
   if (
     counterfactual !== null &&
-    counterfactual.classification !== "PROVEN_REGRESSION"
+    counterfactual.classification !== "PROVEN_REGRESSION" &&
+    counterfactual.classification !== "TEST_NOT_PORTABLE"
   ) {
     unverified.push(`Counterfactual verification: ${counterfactual.classification}`);
   }

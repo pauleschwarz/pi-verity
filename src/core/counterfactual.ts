@@ -142,6 +142,22 @@ export function patchPolarity(
   return "UNDETERMINED";
 }
 
+function hasStructuralBaselineFailure(result: CommandResult): boolean {
+  const output = `${result.stdout}\n${result.stderr}`;
+  return [
+    /ERR_MODULE_NOT_FOUND/,
+    /Cannot find module/i,
+    /does not provide an export named/i,
+    /has no exported member/i,
+    /ModuleNotFoundError/,
+    /cannot import name/i,
+    /unresolved import/i,
+    /error\[E043[23]\]/,
+    /cannot find (?:function|value|type|module|crate)\b/i,
+    /undefined: [A-Za-z_$][\w$]*/,
+  ].some((pattern) => pattern.test(output));
+}
+
 function resultClassification(
   baseline: CommandResult,
   candidate: CommandResult,
@@ -167,6 +183,12 @@ function resultClassification(
       classification: "NON_DISCRIMINATING_TEST",
       diagnosis:
         "Candidate test passes against both baseline and candidate implementations",
+    };
+  if (hasStructuralBaselineFailure(baseline))
+    return {
+      classification: "TEST_NOT_PORTABLE",
+      diagnosis:
+        "Candidate test cannot execute on the baseline because it references candidate-only code",
     };
   return {
     classification: "PROVEN_REGRESSION",
@@ -200,17 +222,15 @@ export async function runCounterfactual(
     signals.push(...antiGaming(file, before, after));
   }
   const allEntries = [...new Set([...baselineEntries, ...candidateEntries])];
-  const implementationChanged = (
-    await Promise.all(
-      allEntries
-        .filter((file) => !isTestPath(file))
-        .map(async (file) => {
-          const before = await text(join(options.baseline.directory, file));
-          const after = await text(join(options.root, file));
-          return before !== after;
-        }),
-    )
-  ).some(Boolean);
+  const implementationFiles = allEntries.filter((file) => !isTestPath(file));
+  const implementationChanges = await Promise.all(
+    implementationFiles.map(async (file) => {
+      const before = await text(join(options.baseline.directory, file));
+      const after = await text(join(options.root, file));
+      return before !== after;
+    }),
+  );
+  const implementationChanged = implementationChanges.some(Boolean);
   const selectedTests = changedTests.length > 0 ? changedTests : candidateFiles;
   if (selectedTests.length === 0 && !implementationChanged) return null;
 

@@ -2,6 +2,28 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## [0.1.2] - 2026-08-29
+
+### Changed
+
+- Counterfactual proof is now optional when candidate evidence cannot execute meaningfully on the baseline.
+- Structural missing-module, import, export, and symbol failures are classified as `TEST_NOT_PORTABLE` instead of regression proof.
+- `TEST_NOT_PORTABLE` no longer makes an otherwise sufficiently verified patch `UNPROVEN`; `NON_DISCRIMINATING_TEST`, `BASELINE_UNAVAILABLE`, and `INCONCLUSIVE` remain unresolved evidence, while `CANDIDATE_FAILS` remains `FAIL`.
+- Rewrote the README around the agent-self-certification problem and the ambient install/use path.
+- Consolidated architecture, proof, counterfactual, adapter, configuration, design, and threat-model documentation into three user-facing guides.
+- Moved GitHub community files under `.github/` and release instructions under `docs/maintainers/`; removed the speculative roadmap.
+
+### Added
+
+- Counterfactual fixtures for a candidate-only API, candidate failure, and unavailable exact baseline alongside the existing regression and non-discriminating fixtures.
+- Concise release evidence and updated claim matrix for the applicability semantics.
+
+### Notes
+
+- ProofReceipt remains schema version 3; no receipt field or classification was added.
+- Install from Git tag `v0.1.2`. npm publication remains unauthorized and unclaimed.
+- Existing `v0.1.0` and `v0.1.1` tags are unchanged.
+
 ## [0.1.1] - 2026-08-28
 
 ### Changed
