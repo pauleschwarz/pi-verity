@@ -1,6 +1,6 @@
 {
   "name": "@pauleschwarz/pi-verity",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A lightweight execution gate that checks whether agent patches are backed by repository evidence.",
   "type": "module",
   "author": "Paul Schwarz",
@@ -36,6 +36,7 @@
     "docs/LIMITATIONS.md",
     "docs/evidence",
     "examples/README.md",
+    "scripts/prepare.mjs",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -43,7 +44,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "biome check src test",
-    "prepare": "npm run build",
+    "prepare": "node scripts/prepare.mjs",
     "prepublishOnly": "npm run verify",
     "test": "node --import tsx --test test/*.test.ts",
     "test:unit": "node --import tsx --test test/adapter-pi.test.ts test/scope-integrity.test.ts",

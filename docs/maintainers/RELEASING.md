@@ -18,7 +18,8 @@ npm pack --dry-run
 
 Also run the Golden Demo, a real Pi extension load, `/verity doctor`, `/verity`,
 and `/verity why`. Check README links, the package allowlist, receipt schema, and
-the moved GitHub community files.
+the moved GitHub community files. `dist/` is committed release output: after the
+build, `git diff --exit-code -- dist` must be clean.
 
 Record the exact result under [`docs/evidence/`](../evidence/README.md).
 
@@ -30,11 +31,14 @@ Record the exact result under [`docs/evidence/`](../evidence/README.md).
 3. Push `main` and wait for required Node 20/22 CI checks.
 4. Create a new annotated `vX.Y.Z` tag. Never move an existing tag.
 5. Push the tag and create a GitHub release from it.
-6. Verify installation from the tag:
+6. Verify installation from the remote tag through Pi's actual Git-package path:
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@vX.Y.Z
+pi -e git:github.com/pauleschwarz/pi-verity@vX.Y.Z
 ```
+
+This must exercise Pi's default `npm install --omit=dev` behavior; a local build
+or tarball-only smoke is not a substitute.
 
 The release workflow verifies and uploads an artifact; it does not publish to
 npm.
