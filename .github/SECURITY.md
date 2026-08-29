@@ -42,7 +42,9 @@ Counterfactual network isolation is currently available on macOS only. On unsupp
 
 The project aims to make verification bounded, transparent, non-destructive to the original worktree, local by default, and free of product telemetry and verifier-owned external network calls.
 
-For the detailed threat model, see [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+For the execution boundary and residual risks, see
+[How it works](../docs/HOW_IT_WORKS.md#bounded-execution) and
+[Limitations](../docs/LIMITATIONS.md#repository-scripts-are-trusted-code).
 
 ## Disclosure
 

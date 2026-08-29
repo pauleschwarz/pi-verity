@@ -1,18 +1,21 @@
-# Evidence Matrix
+# Claim matrix
 
-This matrix links each product claim to deterministic automated evidence. `Result`
-remains `PASS` records a successful run in the current checkout. `PENDING` means the claim still needs a recorded run.
+Each row maps a public claim to deterministic automated evidence in the current
+checkout.
 
-| Claim | Test / Fixture | Expected | Result |
-| ----- | -------------- | -------- | ------ |
-| candidate state is observed independently | `test/counterfactual.test.ts` — useful regression | baseline RED, candidate GREEN | PASS |
-| read-only tool calls do not cause false verification | `test/adapter-pi.lifecycle.test.ts` — read-only tool call | no state change, no proof run | PASS |
-| mutating tool calls are detected | `test/adapter-pi.lifecycle.test.ts` — mutating tool call | changed repository is verified | PASS |
-| candidate test may be non-discriminating | `test/counterfactual.test.ts` — useless always-passing test | `NON_DISCRIMINATING`, `UNPROVEN` | PASS |
-| baseline RED / candidate GREEN is recognized | `test/counterfactual.test.ts` — useful regression | `PROVEN_REGRESSION`, `PASS` | PASS |
-| stale proof is invalidated | `test/adapter-pi.test.ts` — receipt state identity | stale state is detected | PASS |
-| dirty baseline is preserved | `test/verifier.test.ts` — dirty baseline | dirty warning, no clean-baseline claim | PASS |
-| no LLM call is required for deterministic proof | `test/doctor.test.ts` — doctor | local-only capability report | PASS |
-| skipped tests emit an integrity signal | `test/counterfactual.test.ts` — skipped failing test | `TEST_SKIPPED`, `FAIL` | PASS |
-| deleted tests emit an integrity signal | `test/counterfactual.test.ts` — deleted test | `TEST_DELETED`, `FAIL` | PASS |
-| removed assertions emit an integrity signal | `test/counterfactual.test.ts` — weakened assertion | `ASSERTION_REMOVED` | PASS |
+| Claim | Test / fixture | Expected | Result |
+| --- | --- | --- | --- |
+| Regression evidence depends on the patch | `counterfactual.test.ts` — useful regression | baseline RED, candidate GREEN, `PROVEN_REGRESSION`, `PASS` | PASS |
+| A weak test is rejected as proof | `counterfactual.test.ts` — always-passing test | `NON_DISCRIMINATING_TEST`, `UNPROVEN` | PASS |
+| New API evidence is not fake RED | `counterfactual.test.ts` — candidate-only API | structural baseline failure, `TEST_NOT_PORTABLE`, no automatic `UNPROVEN` | PASS |
+| Broken candidate remains a failure | `counterfactual.test.ts` — broken candidate | `CANDIDATE_FAILS`, `FAIL` | PASS |
+| Missing exact baseline is explicit | `counterfactual.test.ts` — changed test without workspace baseline | `BASELINE_UNAVAILABLE`, `UNPROVEN` | PASS |
+| Counterfactual timeout cannot pass | `counterfactual.test.ts` — bounded slow test | `INCONCLUSIVE`, never passing | PASS |
+| Read-only tool calls do not trigger proof | `adapter-pi.lifecycle.test.ts` — read-only call | no state change, no proof run | PASS |
+| Repository-changing calls are detected | `adapter-pi.lifecycle.test.ts` — mutating call | changed repository is verified | PASS |
+| A later edit invalidates proof | `adapter-pi.test.ts` — receipt state identity | adapter reports stale | PASS |
+| Dirty baseline is preserved | `verifier.test.ts` — dirty baseline | warning; no clean-baseline claim | PASS |
+| Skipped tests block proof | `counterfactual.test.ts` — skipped failing test | `TEST_SKIPPED`, `FAIL` | PASS |
+| Deleted tests block proof | `counterfactual.test.ts` — deleted test | `TEST_DELETED`, `FAIL` | PASS |
+| Removed assertions are visible | `counterfactual.test.ts` — weakened assertion | `ASSERTION_REMOVED` | PASS |
+| Deterministic proof needs no LLM | `doctor.test.ts` and core architecture | local-only verifier path | PASS |

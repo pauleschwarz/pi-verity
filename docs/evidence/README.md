@@ -1,45 +1,43 @@
-# Public evidence index
+# Evidence
 
-This directory holds recorded evidence for Pi Verity claims. Prefer the
-automated test suite as the primary proof source; the documents below record
-additional portability and performance observations that are either automated,
-recorded once, or explicitly blocked.
+The automated test suite is the primary evidence. This directory keeps the
+small amount of recorded evidence that is useful outside the tests.
 
-| Document | Kind | Status | What it covers |
-| -------- | ---- | ------ | -------------- |
-| [claim-matrix.md](./claim-matrix.md) | automated | PASS rows recorded against current tests | Core product claims mapped to unit/lifecycle fixtures |
-| [provider-independence.md](./provider-independence.md) | blocked | `BLOCKED` | Two-provider independence check; only one local OmniRoute provider was configured, so no independence run was performed |
-| [performance.md](./performance.md) | recorded | measured on one machine | Wall-clock median/P95 for no-change, small patch, deterministic proof, and counterfactual proof; 0 LLM calls/tokens on the deterministic path |
-| [performance.json](./performance.json) | recorded | raw output of the benchmark | Machine-readable companion to `performance.md` |
-| [readme-truth-audit.md](./readme-truth-audit.md) | recorded | release audit | README claims labeled proven / limited / planned / blocked |
-| [integration-audit-v0.1.1.md](./integration-audit-v0.1.1.md) | recorded | release audit | Full automated + manual gate log for v0.1.1 |
+| Evidence | Status | Covers |
+| --- | --- | --- |
+| [Claim matrix](claim-matrix.md) | PASS | Product claims mapped to deterministic fixtures |
+| [Performance](performance.md) · [raw JSON](performance.json) | recorded | Median/P95 measurements and 0 LLM calls on the deterministic path |
+| [Provider independence](provider-independence.md) | BLOCKED | No claim based on two routes behind one provider |
+| [v0.1.2 release](release-v0.1.2.md) | recorded | Full gate, package, Pi load, commands, and demo |
+| [v0.1.1 release](integration-audit-v0.1.1.md) | recorded | Historical release gate |
 
-## How to regenerate performance evidence
+## Reproduce
 
-```sh
+Core claims:
+
+```bash
+npm ci
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+npm pack --dry-run
+```
+
+Performance evidence:
+
+```bash
 npx tsx scripts/evidence/benchmark.ts
 ```
 
-Redirect or copy the JSON into `docs/evidence/performance.json` and refresh the
-tables in `performance.md` only with values produced by that run. Do not invent
-latency, disk, or token numbers.
-
-## How to unblock provider independence
-
-Configure two genuinely independent upstream providers (for example direct
-OpenAI and direct Anthropic, or a direct provider plus local Ollama). Two model
-names behind a single OmniRoute proxy do not count. Run the same fixture and
-task through both, then replace the `BLOCKED` verdict in
-`provider-independence.md` with `PROVEN_WITH_TWO_INDEPENDENT_PROVIDERS` or
-`PARTIALLY_PROVEN` and document sanitized provider/model names only.
+Only update performance numbers from an actual run. Provider independence
+requires two genuinely independent upstream providers; two OmniRoute model
+names do not count.
 
 ## Integrity rules
 
-- No secrets, API keys, tokens, headers, or private absolute paths.
-- Byte-identical receipts across providers are not required; proof semantics
-  (verdict, stale, counterfactual classification) are.
-- `STALE` is an adapter-visible state when the repository no longer matches a
-  prior receipt; it is not a core receipt verdict.
-- Deterministic proof does not require an LLM. Optional repair is opt-in via
-  `PI_VERITY_MAX_REPAIR_ATTEMPTS` and is out of scope for the performance smoke
-  benchmark above.
+- No secrets, tokens, headers, or private absolute paths.
+- A blocked check stays blocked; missing evidence is never rewritten as PASS.
+- `STALE` is adapter state, not a core receipt verdict.
+- Deterministic verification requires no LLM. Optional same-agent repair is a
+  separate, opt-in path.
