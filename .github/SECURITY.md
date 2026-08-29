@@ -43,8 +43,9 @@ Counterfactual network isolation is currently available on macOS only. On unsupp
 The project aims to make verification bounded, transparent, non-destructive to the original worktree, local by default, and free of product telemetry and verifier-owned external network calls.
 
 For the execution boundary and residual risks, see
-[How it works](../docs/HOW_IT_WORKS.md#bounded-execution) and
-[Limitations](../docs/LIMITATIONS.md#repository-scripts-are-trusted-code).
+[How it works](https://github.com/pauleschwarz/pi-verity/blob/main/docs/HOW_IT_WORKS.md#bounded-execution)
+and
+[Limitations](https://github.com/pauleschwarz/pi-verity/blob/main/docs/LIMITATIONS.md#repository-scripts-are-trusted-code).
 
 ## Disclosure
 
