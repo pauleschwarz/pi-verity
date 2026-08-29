@@ -28,7 +28,6 @@ docs/research-findings.md
 
 # Runtime/build output
 node_modules/
-dist/
 coverage/
 .DS_Store
 

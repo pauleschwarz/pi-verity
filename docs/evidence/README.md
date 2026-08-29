@@ -8,7 +8,8 @@ small amount of recorded evidence that is useful outside the tests.
 | [Claim matrix](claim-matrix.md) | PASS | Product claims mapped to deterministic fixtures |
 | [Performance](performance.md) · [raw JSON](performance.json) | recorded | Median/P95 measurements and 0 LLM calls on the deterministic path |
 | [Provider independence](provider-independence.md) | BLOCKED | No claim based on two routes behind one provider |
-| [v0.1.2 release](release-v0.1.2.md) | recorded | Full gate, package, Pi load, commands, and demo |
+| [v0.1.3 release](release-v0.1.3.md) | recorded | Git-install fix, full gate, package, Pi load, and demo |
+| [v0.1.2 release](release-v0.1.2.md) | superseded | Semantics/docs release; Git-source install regression fixed in v0.1.3 |
 | [v0.1.1 release](integration-audit-v0.1.1.md) | recorded | Historical release gate |
 
 ## Reproduce
