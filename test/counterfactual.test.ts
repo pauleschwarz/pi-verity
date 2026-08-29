@@ -216,6 +216,68 @@ test("implementation-only patch without tests is not portable", async () => {
   const receipt = await verify(root, capture);
   assert.equal(receipt.counterfactual?.classification, "TEST_NOT_PORTABLE");
   assert.equal(receipt.counterfactual?.patch_polarity, "UNDETERMINED");
+  assert.equal(receipt.verdict, "PASS");
+});
+
+test("a candidate test for a new API is not treated as regression proof", async () => {
+  const root = await repository();
+  const capture = await captured(root);
+  await writeFile(
+    join(root, "source.js"),
+    `export function enabled() { return false; }
+export function exportCsv() { return "name\\nAda\\n"; }
+`,
+  );
+  await mkdir(join(root, "test"));
+  await writeFile(
+    join(root, "test", "csv.test.js"),
+    `import test from "node:test";
+import assert from "node:assert/strict";
+import { exportCsv } from "../source.js";
+test("exports CSV", () => assert.equal(exportCsv(), "name\\nAda\\n"));
+`,
+  );
+  const receipt = await verify(root, capture);
+  assert.equal(receipt.verification_commands[0]?.exit_code, 0);
+  assert.equal(receipt.counterfactual?.classification, "TEST_NOT_PORTABLE");
+  assert.equal(receipt.counterfactual?.patch_polarity, "UNDETERMINED");
+  assert.doesNotMatch(receipt.unverified_dimensions.join("\n"), /TEST_NOT_PORTABLE/);
+  assert.ok(receipt.verdict === "PASS" || receipt.verdict === "PASS_WITH_WARNINGS");
+});
+
+test("a broken candidate remains a failure", async () => {
+  const root = await repository();
+  const capture = await captured(root);
+  await writeFile(
+    join(root, "source.js"),
+    "export function enabled() { return true; }\n",
+  );
+  await mkdir(join(root, "test"));
+  await writeFile(
+    join(root, "test", "behavior.test.js"),
+    usefulTest.replace("true));", "false));"),
+  );
+  const receipt = await verify(root, capture);
+  assert.equal(receipt.counterfactual?.classification, "CANDIDATE_FAILS");
+  assert.equal(receipt.verdict, "FAIL");
+});
+
+test("a changed test without an exact baseline is explicitly unavailable", async () => {
+  const root = await repository();
+  const baseline = await captureGitSnapshot(root);
+  await writeFile(
+    join(root, "source.js"),
+    "export function enabled() { return true; }\n",
+  );
+  await mkdir(join(root, "test"));
+  await writeFile(join(root, "test", "behavior.test.js"), usefulTest);
+  const receipt = await verifyRepository({
+    cwd: root,
+    baseline,
+    allowCounterfactualNetwork: true,
+  });
+  assert.equal(receipt.counterfactual?.classification, "BASELINE_UNAVAILABLE");
+  assert.equal(receipt.verdict, "UNPROVEN");
 });
 
 test("a valid fix records baseline RED and candidate GREEN", async () => {

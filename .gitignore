@@ -32,5 +32,7 @@ dist/
 coverage/
 .DS_Store
 
-# Local infinity-harness state (not part of the product release)
+# Local infinity-harness/pi state (not part of the product release)
 harness/
+tmp/
+.pi/
