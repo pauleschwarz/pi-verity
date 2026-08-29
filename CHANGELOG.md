@@ -2,6 +2,19 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## [0.1.3] - 2026-08-29
+
+### Fixed
+
+- Git-tag installation through Pi now works with Pi's default `npm install --omit=dev` path.
+- Release tags include prebuilt `dist/` files; the prepare script rebuilds when TypeScript is installed and otherwise verifies the release build instead of requiring a runtime compiler.
+
+### Notes
+
+- v0.1.2 remains immutable but its Git-source install fails because its prepare script requires the omitted TypeScript dev dependency. Use v0.1.3.
+- Runtime proof semantics and ProofReceipt schema v3 are unchanged from v0.1.2.
+- npm publication remains unauthorized and unclaimed.
+
 ## [0.1.2] - 2026-08-29
 
 ### Changed
