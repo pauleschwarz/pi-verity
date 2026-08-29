@@ -66,4 +66,6 @@ Use a focused title and explain:
 - tests run
 - remaining limitations
 
-Security reports should follow [SECURITY.md](SECURITY.md), not a public issue.
+Security reports should follow the
+[Security Policy](https://github.com/pauleschwarz/pi-verity/security/policy), not a
+public issue.

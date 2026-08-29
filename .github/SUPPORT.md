@@ -23,7 +23,7 @@ Please include:
 
 Do not use public issues for security vulnerabilities.
 
-See [`SECURITY.md`](SECURITY.md).
+See the [Security Policy](https://github.com/pauleschwarz/pi-verity/security/policy).
 
 ## Scope
 
