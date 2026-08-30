@@ -180,31 +180,94 @@ test("unset repair limit is passive by default", async () => {
   }
 });
 
-test("automatic repair stops after the configured limit", async () => {
+test("PASS does not trigger repair when repair is enabled", async () => {
   const root = await createFixture();
   const fake = fakePi();
   const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
-  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "2";
+  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "1";
   piVerity(fake.api);
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
-    for (const value of [2, 3, 4]) {
+    await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
+    await writeFile(
+      join(root, "value.test.mjs"),
+      'import assert from "node:assert/strict";\nimport { value } from "./value.mjs";\nassert.equal(value, 2);\n',
+    );
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
+    await fake.events.get("agent_settled")?.({}, context);
+
+    assert.equal(fake.entries.at(-1)?.verdict, "PASS");
+    assert.equal(fake.messages.length, 0);
+    assert.equal(fake.notices.length, 1);
+    assert.match(fake.notices[0] ?? "", /^verity ✓ PASS · /);
+  } finally {
+    if (previousLimit === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+    } else {
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
+    }
+    await fake.events.get("session_shutdown")?.({}, context);
+    await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("UNPROVEN does not trigger repair when repair is enabled", async () => {
+  const root = await createFixture();
+  const fake = fakePi();
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "1";
+  piVerity(fake.api);
+  const context = fake.context(root);
+  try {
+    await fake.events.get("session_start")?.({}, context);
+    await writeFile(
+      join(root, "package.json"),
+      `${JSON.stringify({ name: "adapter-fixture", private: true })}\n`,
+    );
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
+    await fake.events.get("agent_settled")?.({}, context);
+
+    assert.equal(fake.entries.at(-1)?.verdict, "UNPROVEN");
+    assert.equal(fake.messages.length, 0);
+  } finally {
+    if (previousLimit === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+    } else {
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
+    }
+    await fake.events.get("session_shutdown")?.({}, context);
+    await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("automatic repair stops after the configured limit", async () => {
+  const root = await createFixture();
+  const fake = fakePi();
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "1";
+  piVerity(fake.api);
+  const context = fake.context(root);
+  try {
+    await fake.events.get("session_start")?.({}, context);
+    for (const value of [2, 3]) {
       await writeFile(join(root, "value.mjs"), `export const value = ${value};\n`);
       await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
       await fake.events.get("agent_settled")?.({}, context);
     }
 
-    assert.equal(fake.messages.length, 3);
+    assert.equal(fake.messages.length, 2);
     assert.deepEqual(
       fake.messages.map((message) => message.options?.triggerTurn),
-      [true, true, false],
+      [true, false],
     );
     assert.deepEqual(
       fake.messages.map((message) => message.options?.deliverAs),
-      ["followUp", "followUp", "nextTurn"],
+      ["followUp", "nextTurn"],
     );
-    assert.match(fake.messages[2]?.content ?? "", /repair limit reached \(2\)/);
+    assert.match(fake.messages[1]?.content ?? "", /repair limit reached \(1\)/);
   } finally {
     if (previousLimit === undefined) {
       Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
@@ -256,6 +319,8 @@ test("mutating tool calls trigger verification", async () => {
 test("doctor command reports local readiness", async () => {
   const root = await createFixture();
   const fake = fakePi();
+  const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
   piVerity(fake.api);
   const context = fake.context(root);
   try {
@@ -263,7 +328,17 @@ test("doctor command reports local readiness", async () => {
     assert.match(fake.notices[0] ?? "", /Ready\./);
     assert.match(fake.notices[0] ?? "", /automatic repair: disabled/);
     assert.equal(fake.entries.length, 0);
+
+    process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "2";
+    await fake.commands.get("verity")?.("doctor", context);
+    assert.match(fake.notices.at(-1) ?? "", /automatic repair: enabled \(limit 2\)/);
+    assert.equal(fake.entries.length, 0);
   } finally {
+    if (previousLimit === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
+    } else {
+      process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
+    }
     await fake.events.get("session_shutdown")?.({}, context);
     await rm(root, { recursive: true, force: true });
   }
