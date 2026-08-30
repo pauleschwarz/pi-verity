@@ -184,7 +184,11 @@ test("PASS does not trigger repair when repair is enabled", async () => {
   const root = await createFixture();
   const fake = fakePi();
   const previousLimit = process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS;
+  const previousNetwork = process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK;
   process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = "1";
+  // Linux CI has no network isolation; allow the counterfactual path so this
+  // asserts repair-on-PASS behavior instead of platform INCONCLUSIVE noise.
+  process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = "1";
   piVerity(fake.api);
   const context = fake.context(root);
   try {
@@ -206,6 +210,11 @@ test("PASS does not trigger repair when repair is enabled", async () => {
       Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
     } else {
       process.env.PI_VERITY_MAX_REPAIR_ATTEMPTS = previousLimit;
+    }
+    if (previousNetwork === undefined) {
+      Reflect.deleteProperty(process.env, "PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK");
+    } else {
+      process.env.PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK = previousNetwork;
     }
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
