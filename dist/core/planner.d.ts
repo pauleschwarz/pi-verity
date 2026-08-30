@@ -3,8 +3,6 @@ export interface ChangeFacts {
     files: readonly string[];
     /** Existing suite usable for counterfactual when no test file changed. */
     hasExistingTests?: boolean;
-    /** Exact pre-change workspace captured for counterfactual comparison. */
-    hasExactBaseline?: boolean;
 }
 export interface ProofCheckPlan {
     selected: boolean;
