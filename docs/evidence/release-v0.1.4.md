@@ -16,10 +16,11 @@ verification still over-claimed or over-ran in two practical cases:
 2. counterfactual comparison could be selected without an exact pre-change
    workspace, which cannot produce honest baseline/candidate polarity.
 
-v0.1.4 adds a deterministic local planner and tightens counterfactual selection
-to require both usable tests and an exact baseline. Ambient PASS notices become
-one fact line: files, `+added/-removed`, milliseconds. Failures stay actionable
-and still point at `/verity why`.
+v0.1.4 adds a deterministic local planner. Counterfactual proof remains
+conditional: it is selected when usable tests are available, while the verifier
+records `BASELINE_UNAVAILABLE` when no exact pre-change workspace was captured.
+Ambient PASS notices become one fact line: files, `+added/-removed`,
+milliseconds. Failures stay actionable and still point at `/verity why`.
 
 ## What changed in the product surface
 
@@ -27,8 +28,8 @@ and still point at `/verity why`.
 | --- | --- |
 | Proof selection | `planProof()` classifies `none`, `docs_only`, `source`, `source+test`, `test`, `boundary` |
 | Standard checks | skipped for docs-only / no-change |
-| Counterfactual | selected only with usable tests **and** exact baseline |
-| Missing baseline | explicit `BASELINE_UNAVAILABLE` evidence when candidate tests exist |
+| Counterfactual | selected when usable tests are available; baseline availability is reported separately |
+| Missing baseline | explicit `BASELINE_UNAVAILABLE` evidence when the selected proof lacks a capture |
 | Ambient PASS | `verity ✓ PASS · N files +A/-R · Xms` |
 | Explicit `/verity run` | still announces every result |
 | Schema | still ProofReceipt v3 |
