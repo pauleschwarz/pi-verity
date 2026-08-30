@@ -184,7 +184,6 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
   const plan = planProof({
     files: gitChangedFiles,
     hasExistingTests: options.counterfactualBaseline !== undefined,
-    hasExactBaseline: options.counterfactualBaseline !== undefined,
   });
   warnings.push(...discovery.warnings);
   let results: CommandResult[] = [];
@@ -207,7 +206,7 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
   }
 
   let counterfactual: CounterfactualEvidence | null = null;
-  if (plan.testFiles.length > 0 && options.counterfactualBaseline === undefined) {
+  if (plan.counterfactual.selected && options.counterfactualBaseline === undefined) {
     counterfactual = {
       classification: "BASELINE_UNAVAILABLE",
       patch_polarity: "UNDETERMINED",
