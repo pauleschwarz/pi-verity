@@ -1,6 +1,6 @@
 {
   "name": "@pauleschwarz/pi-verity",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A lightweight execution gate that checks whether agent patches are backed by repository evidence.",
   "type": "module",
   "author": "Paul Schwarz",
