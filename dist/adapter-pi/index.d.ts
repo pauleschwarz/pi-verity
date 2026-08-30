@@ -1,3 +1,4 @@
+import { type GitDiffStat } from "../core/git.js";
 import type { GitSnapshot, ProofReceipt } from "../core/types.js";
 interface PiContext {
     cwd?: string;
@@ -29,7 +30,7 @@ interface PiApi {
         handler: (args: string, context: PiContext) => Promise<void>;
     }) => void;
 }
-export declare function formatReceiptSummary(receipt: ProofReceipt): string;
+export declare function formatReceiptSummary(receipt: ProofReceipt, diff?: GitDiffStat | null): string;
 export declare function explainReceipt(receipt: ProofReceipt): string;
 export declare function receiptMatchesState(receipt: ProofReceipt, current: GitSnapshot): boolean;
 export declare function minimalFailureEvidence(receipt: ProofReceipt): string;
