@@ -30,7 +30,9 @@ irrelevant; Verity cannot infer that intent.
 
 An exact pre-change workspace is required. When expected candidate tests exist
 but that workspace was not captured, the result is `BASELINE_UNAVAILABLE`, not
-fabricated RED evidence.
+fabricated RED evidence. The planner refuses to select counterfactual comparison
+without that baseline; absence of comparison is explicit evidence, not a silent
+skip.
 
 ## Repository scripts are trusted code
 

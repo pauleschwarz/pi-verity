@@ -2,6 +2,7 @@ export * from "./counterfactual.js";
 export * from "./discovery.js";
 export * from "./doctor.js";
 export * from "./git.js";
+export * from "./planner.js";
 export * from "./process.js";
 export * from "./receipt.js";
 export * from "./scope-integrity.js";

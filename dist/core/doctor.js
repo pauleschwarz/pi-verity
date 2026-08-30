@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { discoverVerification } from "./discovery.js";
 import { findRepositoryRoot, NotGitRepositoryError } from "./git.js";
-export const VERSION = "0.1.3";
+export const VERSION = "0.1.4";
 function check(status, label, detail) {
     return { status, label, detail: detail ?? null };
 }
