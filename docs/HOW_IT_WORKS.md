@@ -23,10 +23,16 @@ secondary agent.
 before agent turn      capture Git identity and exact workspace baseline
 agent turn             observe repository-capable tools
 agent settled          compare state; skip if nothing changed
-verification           run bounded checks in disposable copies
+proof plan             classify the patch; select only meaningful checks
+verification           run selected bounded checks in disposable copies
 receipt                bind evidence to the final repository-state hash
 later repository edit  report the prior receipt as STALE
 ```
+
+The planner is deterministic and local. Documentation-only changes skip standard
+verification. Counterfactual comparison is selected only when usable tests and an
+exact pre-change workspace are both available. Ambient PASS notices stay one fact
+line: changed files, `+added/-removed`, and elapsed milliseconds.
 
 The original worktree is not reset, stashed, cleaned, or used as the command
 workspace. Temporary copies are removed after verification. Receipts are stored

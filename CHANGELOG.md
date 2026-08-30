@@ -2,6 +2,38 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## [0.1.4] - 2026-08-30
+
+### Added
+
+- Deterministic proof planner: classifies patches as `none`, `docs_only`, `source`,
+  `source+test`, `test`, or `boundary`, then selects only the proof dimensions that
+  can actually speak for that change.
+- Diff-first ambient receipt summaries: `verity ✓ PASS · N files +A/-R · Xms`.
+- `captureGitDiffStat()` for tracked and untracked working-tree line counts.
+
+### Changed
+
+- Documentation-only and no-change turns no longer force standard verification or
+  noisy `UNPROVEN` paths.
+- Counterfactual selection now requires both usable tests and an exact pre-change
+  workspace baseline; without that baseline Verity records `BASELINE_UNAVAILABLE`
+  instead of pretending comparison is possible.
+- Ambient PASS remains one quiet fact line after a real repository mutation;
+  explicit `/verity run` still announces every result.
+
+### Fixed
+
+- False pressure to treat docs-only agent turns as incomplete verification.
+- Counterfactual path no longer overclaims when the exact baseline was never captured.
+
+### Notes
+
+- ProofReceipt remains schema version 3; no receipt field or classification was added.
+- Install from Git tag `v0.1.4`. npm publication remains unauthorized and unclaimed.
+- v0.1.3 remains the last packaging-only install fix; v0.1.4 is the first proof-selection
+  and ambient UX release on top of that install path.
+
 ## [0.1.3] - 2026-08-29
 
 ### Fixed
