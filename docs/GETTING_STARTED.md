@@ -5,7 +5,7 @@ Install once, use Pi normally, inspect Verity only when you need detail.
 ## Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.4
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.5
 ```
 
 The package is installed from the GitHub release tag. Pi Verity is not

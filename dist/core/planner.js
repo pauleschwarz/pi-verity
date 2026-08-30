@@ -29,26 +29,22 @@ export function planProof(changeFacts) {
         kind = "source+test";
     else if (hasSource)
         kind = "source";
-    else if (hasChangedTests || (hasTests && !hasSource && !hasBoundary))
+    else if (hasChangedTests)
         kind = "test";
     else if (hasBoundary)
         kind = "boundary";
     const standardSelected = kind !== "none" && kind !== "docs_only";
-    const hasExactBaseline = changeFacts.hasExactBaseline === true;
-    const counterfactualSelected = kind !== "none" && kind !== "docs_only" && hasTests && hasExactBaseline;
+    const counterfactualSelected = kind !== "none" && kind !== "docs_only" && hasTests;
     let standardReason = "no repository files changed";
     if (standardSelected)
         standardReason = "source, test, or verification-boundary files changed";
     else if (kind === "docs_only")
         standardReason = "documentation-only change";
-    let counterfactualReason = "no test change or exact baseline requires comparison";
+    let counterfactualReason = "no test change or existing test suite";
     if (counterfactualSelected) {
         counterfactualReason = hasChangedTests
-            ? "a test file changed and an exact baseline is available"
-            : "an exact baseline is available for comparison";
-    }
-    else if (hasTests && !hasExactBaseline) {
-        counterfactualReason = "tests are available but the exact baseline is unavailable";
+            ? "a test file changed"
+            : "an existing test suite is available";
     }
     return {
         kind,

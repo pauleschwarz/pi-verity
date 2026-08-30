@@ -12,7 +12,7 @@ repository.
 ## Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.4
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.5
 ```
 
 Then use Pi normally. Inside a Git repository, check the installation once:
