@@ -20,14 +20,24 @@ test("source changes use an existing test suite for counterfactual proof", () =>
   const plan = planProof({
     files: ["src/core/verifier.ts"],
     hasExistingTests: true,
+    hasExactBaseline: true,
   });
   assert.equal(plan.kind, "source");
   assert.equal(plan.counterfactual.selected, true);
 });
 
+test("counterfactual proof requires an exact baseline", () => {
+  const plan = planProof({
+    files: ["src/core/verifier.ts"],
+    hasExistingTests: true,
+  });
+  assert.equal(plan.counterfactual.selected, false);
+});
+
 test("source and test changes select both proof dimensions", () => {
   const plan = planProof({
     files: ["src/core/verifier.ts", "test/verifier.test.ts"],
+    hasExactBaseline: true,
   });
   assert.equal(plan.kind, "source+test");
   assert.equal(plan.standard.selected, true);

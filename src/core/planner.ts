@@ -72,7 +72,9 @@ export function planProof(changeFacts: ChangeFacts): ProofPlan {
   else if (hasBoundary) kind = "boundary";
 
   const standardSelected = kind !== "none" && kind !== "docs_only";
-  const counterfactualSelected = kind !== "none" && kind !== "docs_only" && hasTests;
+  const hasExactBaseline = changeFacts.hasExactBaseline === true;
+  const counterfactualSelected =
+    kind !== "none" && kind !== "docs_only" && hasTests && hasExactBaseline;
 
   let standardReason = "no repository files changed";
   if (standardSelected)
@@ -82,8 +84,10 @@ export function planProof(changeFacts: ChangeFacts): ProofPlan {
   let counterfactualReason = "no test change or exact baseline requires comparison";
   if (counterfactualSelected) {
     counterfactualReason = hasChangedTests
-      ? "a test file changed"
+      ? "a test file changed and an exact baseline is available"
       : "an exact baseline is available for comparison";
+  } else if (hasTests && !hasExactBaseline) {
+    counterfactualReason = "tests are available but the exact baseline is unavailable";
   }
 
   return {
