@@ -2,6 +2,21 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## [0.1.5] - 2026-08-30
+
+### Fixed
+
+- Counterfactual planning no longer depends on baseline capture. The verifier
+  still records `BASELINE_UNAVAILABLE` when a selected proof has no exact
+  pre-change workspace, preserving conditional proof semantics without
+  suppressing the explicit unavailable state.
+
+### Notes
+
+- v0.1.5 is a corrective release on top of the immutable v0.1.4 ambient
+  verification release.
+- npm publication remains unauthorized and unclaimed.
+
 ## [0.1.4] - 2026-08-30
 
 ### Added
