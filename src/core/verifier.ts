@@ -1,8 +1,4 @@
-import {
-  type CounterfactualOptions,
-  isTestPath,
-  runCounterfactual,
-} from "./counterfactual.js";
+import { type CounterfactualOptions, runCounterfactual } from "./counterfactual.js";
 import { discoverVerification } from "./discovery.js";
 import {
   captureGitSnapshot,
@@ -10,6 +6,7 @@ import {
   findRepositoryRoot,
   NotGitRepositoryError,
 } from "./git.js";
+import { type ProofPlan, planProof } from "./planner.js";
 import { type RunOptions, runCommand } from "./process.js";
 import {
   analyzeScopeIntegrity,
@@ -46,27 +43,13 @@ async function analyzeRepositoryScope(
   return analyzeScopeIntegrity(scopeOptions);
 }
 
-function unavailableCounterfactual(testFiles: string[]): CounterfactualEvidence {
-  return {
-    classification: "BASELINE_UNAVAILABLE",
-    patch_polarity: "UNDETERMINED",
-    candidate_test_files: testFiles,
-    command: null,
-    baseline_result: null,
-    candidate_result: null,
-    anti_gaming_signals: [],
-    network_policy: "unavailable",
-    workspace_bytes: 0,
-    diagnosis: "An exact pre-change workspace was not captured",
-  };
-}
-
 interface VerdictEvidence {
   changed: boolean;
   baselineDirty: boolean;
   commands: CommandResult[];
   counterfactual: CounterfactualEvidence | null;
   scopeIntegrity: ScopeIntegrityEvidence;
+  plan: ProofPlan;
   warnings: string[];
   unverified: string[];
 }
@@ -94,7 +77,8 @@ function decideVerdict(evidence: VerdictEvidence): Verdict {
     unverified.length > 0
   )
     return "UNPROVEN";
-  if (changed && commands.length === 0) return "UNPROVEN";
+  if (changed && evidence.plan.standard.selected && commands.length === 0)
+    return "UNPROVEN";
   if (
     baselineDirty ||
     warnings.length > 0 ||
@@ -197,11 +181,16 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
     );
 
   const discovery = await discoverVerification(root);
+  const plan = planProof({
+    files: gitChangedFiles,
+    hasExistingTests: options.counterfactualBaseline !== undefined,
+    hasExactBaseline: options.counterfactualBaseline !== undefined,
+  });
   warnings.push(...discovery.warnings);
   let results: CommandResult[] = [];
-  if (changed && discovery.commands.length === 0) {
+  if (changed && plan.standard.selected && discovery.commands.length === 0) {
     unverified.push("No repository-defined verification command was discovered");
-  } else if (changed) {
+  } else if (changed && plan.standard.selected) {
     try {
       results = await runStandardVerification(root, discovery.commands, options);
       for (const result of results) {
@@ -218,10 +207,24 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
   }
 
   let counterfactual: CounterfactualEvidence | null = null;
-  const changedTests = files.filter(isTestPath);
-  if (changedTests.length > 0 && options.counterfactualBaseline === undefined) {
-    counterfactual = unavailableCounterfactual(changedTests);
-  } else if (changed && options.counterfactualBaseline !== undefined) {
+  if (plan.testFiles.length > 0 && options.counterfactualBaseline === undefined) {
+    counterfactual = {
+      classification: "BASELINE_UNAVAILABLE",
+      patch_polarity: "UNDETERMINED",
+      candidate_test_files: plan.testFiles,
+      command: null,
+      baseline_result: null,
+      candidate_result: null,
+      anti_gaming_signals: [],
+      network_policy: "unavailable",
+      workspace_bytes: 0,
+      diagnosis: "An exact pre-change workspace was not captured",
+    };
+  } else if (
+    plan.counterfactual.selected &&
+    changed &&
+    options.counterfactualBaseline !== undefined
+  ) {
     const counterfactualOptions: CounterfactualOptions = {
       root,
       baseline: options.counterfactualBaseline,
@@ -267,6 +270,7 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
       commands: results,
       counterfactual,
       scopeIntegrity,
+      plan,
       warnings,
       unverified,
     }),

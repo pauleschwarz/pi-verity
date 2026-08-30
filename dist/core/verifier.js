@@ -1,6 +1,7 @@
-import { isTestPath, runCounterfactual, } from "./counterfactual.js";
+import { runCounterfactual } from "./counterfactual.js";
 import { discoverVerification } from "./discovery.js";
 import { captureGitSnapshot, changedFiles, findRepositoryRoot, NotGitRepositoryError, } from "./git.js";
+import { planProof } from "./planner.js";
 import { runCommand } from "./process.js";
 import { analyzeScopeIntegrity, } from "./scope-integrity.js";
 import { SCHEMA_VERSION, } from "./types.js";
@@ -19,20 +20,6 @@ async function analyzeRepositoryScope(root, files, baseline, baselineDirectory) 
         scopeOptions.baselineRef = baseline.sha;
     return analyzeScopeIntegrity(scopeOptions);
 }
-function unavailableCounterfactual(testFiles) {
-    return {
-        classification: "BASELINE_UNAVAILABLE",
-        patch_polarity: "UNDETERMINED",
-        candidate_test_files: testFiles,
-        command: null,
-        baseline_result: null,
-        candidate_result: null,
-        anti_gaming_signals: [],
-        network_policy: "unavailable",
-        workspace_bytes: 0,
-        diagnosis: "An exact pre-change workspace was not captured",
-    };
-}
 function decideVerdict(evidence) {
     const { changed, baselineDirty, commands, counterfactual, scopeIntegrity, warnings, unverified, } = evidence;
     if (commands.some((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled))
@@ -44,7 +31,7 @@ function decideVerdict(evidence) {
     if (commands.some((result) => result.cancelled || result.timed_out) ||
         unverified.length > 0)
         return "UNPROVEN";
-    if (changed && commands.length === 0)
+    if (changed && evidence.plan.standard.selected && commands.length === 0)
         return "UNPROVEN";
     if (baselineDirty ||
         warnings.length > 0 ||
@@ -128,12 +115,17 @@ export async function verifyRepository(options) {
     if (baseline.dirty)
         warnings.push("Baseline working tree was dirty; pi-verity does not claim a clean baseline");
     const discovery = await discoverVerification(root);
+    const plan = planProof({
+        files: gitChangedFiles,
+        hasExistingTests: options.counterfactualBaseline !== undefined,
+        hasExactBaseline: options.counterfactualBaseline !== undefined,
+    });
     warnings.push(...discovery.warnings);
     let results = [];
-    if (changed && discovery.commands.length === 0) {
+    if (changed && plan.standard.selected && discovery.commands.length === 0) {
         unverified.push("No repository-defined verification command was discovered");
     }
-    else if (changed) {
+    else if (changed && plan.standard.selected) {
         try {
             results = await runStandardVerification(root, discovery.commands, options);
             for (const result of results) {
@@ -148,11 +140,23 @@ export async function verifyRepository(options) {
         }
     }
     let counterfactual = null;
-    const changedTests = files.filter(isTestPath);
-    if (changedTests.length > 0 && options.counterfactualBaseline === undefined) {
-        counterfactual = unavailableCounterfactual(changedTests);
+    if (plan.testFiles.length > 0 && options.counterfactualBaseline === undefined) {
+        counterfactual = {
+            classification: "BASELINE_UNAVAILABLE",
+            patch_polarity: "UNDETERMINED",
+            candidate_test_files: plan.testFiles,
+            command: null,
+            baseline_result: null,
+            candidate_result: null,
+            anti_gaming_signals: [],
+            network_policy: "unavailable",
+            workspace_bytes: 0,
+            diagnosis: "An exact pre-change workspace was not captured",
+        };
     }
-    else if (changed && options.counterfactualBaseline !== undefined) {
+    else if (plan.counterfactual.selected &&
+        changed &&
+        options.counterfactualBaseline !== undefined) {
         const counterfactualOptions = {
             root,
             baseline: options.counterfactualBaseline,
@@ -195,6 +199,7 @@ export async function verifyRepository(options) {
             commands: results,
             counterfactual,
             scopeIntegrity,
+            plan,
             warnings,
             unverified,
         }),

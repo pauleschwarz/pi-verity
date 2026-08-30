@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { discoverVerification } from "./discovery.js";
 import { findRepositoryRoot, NotGitRepositoryError } from "./git.js";
 
-export const VERSION = "0.1.3";
+export const VERSION = "0.1.4";
 
 export type DoctorStatus = "OK" | "WARN" | "ERROR";
 

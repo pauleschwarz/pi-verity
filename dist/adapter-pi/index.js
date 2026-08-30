@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { formatDoctorReport, runDoctor } from "../core/doctor.js";
-import { captureGitSnapshot, findRepositoryRoot } from "../core/git.js";
+import { captureGitDiffStat, captureGitSnapshot, findRepositoryRoot, } from "../core/git.js";
 import { canonicalJson, sha256 } from "../core/hash.js";
 import { writeReceipt } from "../core/receipt.js";
 import { verifyRepository } from "../core/verifier.js";
@@ -53,15 +53,17 @@ function receiptDuration(receipt) {
         (counterfactual?.baseline_result?.duration_ms ?? 0) +
         (counterfactual?.candidate_result?.duration_ms ?? 0));
 }
-function checkCount(receipt) {
-    return (receipt.verification_commands.length + (receipt.counterfactual === null ? 0 : 1) + 1);
+function formatDiffFacts(receipt, diff) {
+    const files = diff?.files ?? receipt.changed_files.length;
+    const added = diff?.added;
+    const removed = diff?.removed;
+    const counts = added !== undefined && removed !== undefined
+        ? `${files} file${files === 1 ? "" : "s"} +${added}/-${removed}`
+        : `${files} file${files === 1 ? "" : "s"}`;
+    const ms = Math.max(0, Math.round(receiptDuration(receipt)));
+    return `${counts} · ${ms}ms`;
 }
-export function formatReceiptSummary(receipt) {
-    const seconds = (receiptDuration(receipt) / 1000).toFixed(1);
-    if (receipt.verdict === "PASS") {
-        return `pi-verity ✓ ${checkCount(receipt)} checks · ${seconds}s · proof: PASS`;
-    }
-    const marker = receipt.verdict === "FAIL" ? "✗" : "⚠";
+function summaryDiagnostics(receipt) {
     const failedCommands = receipt.verification_commands.flatMap((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled
         ? [`${commandLabel(result)} failed`]
         : []);
@@ -69,15 +71,33 @@ export function formatReceiptSummary(receipt) {
         ? [receipt.counterfactual.diagnosis]
         : [];
     const signalDetails = receipt.scope_integrity.signals.flatMap((signal) => signal.severity === "INFORMATION" ? [] : [signal.observed]);
-    const details = [
+    return [
         ...failedCommands,
         ...counterfactualFailure,
         ...signalDetails,
         ...receipt.warnings,
         ...receipt.unverified_dimensions,
-    ].slice(0, 2);
-    const suffix = details.length === 0 ? "" : `\n${details.join(" · ")}`;
-    return `pi-verity ${marker} ${receipt.verdict}${suffix}\n/verity why`;
+    ].slice(0, 3);
+}
+export function formatReceiptSummary(receipt, diff) {
+    const facts = formatDiffFacts(receipt, diff);
+    if (receipt.verdict === "PASS") {
+        return `verity ✓ PASS · ${facts}`;
+    }
+    if (receipt.verdict === "PASS_WITH_WARNINGS") {
+        const details = summaryDiagnostics(receipt);
+        const suffix = details.length === 0 ? "" : `\n${details.join("\n")}`;
+        return `verity ⚠ PASS_WITH_WARNINGS · ${facts}${suffix}`;
+    }
+    const marker = receipt.verdict === "FAIL" ? "✗" : "⚠";
+    const primary = diff?.primaryPath ??
+        receipt.changed_files.slice().sort((a, b) => a.localeCompare(b))[0];
+    const head = primary === undefined
+        ? `verity ${marker} ${receipt.verdict} · ${facts}`
+        : `verity ${marker} ${receipt.verdict} · ${primary}`;
+    const details = summaryDiagnostics(receipt);
+    const body = details.length === 0 ? "" : `\n${details.join("\n")}`;
+    return `${head}${body}\n/verity why`;
 }
 export function explainReceipt(receipt) {
     const lines = [`pi-verity ${receipt.verdict}`];
@@ -303,8 +323,19 @@ class PiVerityRuntime {
             const file = await this.persistReceipt(receipt, context);
             this.lastReceipt = receipt;
             this.lastReceiptPath = file;
-            if (announce || receipt.verdict !== "PASS") {
-                context.ui?.notify?.(formatReceiptSummary(receipt), receiptLevel(receipt.verdict));
+            let diff = null;
+            if (this.root !== undefined) {
+                try {
+                    diff = await captureGitDiffStat(this.root);
+                }
+                catch {
+                    diff = null;
+                }
+            }
+            // Ambient rule: one quiet PASS line after a real repository mutation;
+            // explicit /verity run always announces; read-only turns never reach here.
+            if (announce || receipt.verdict !== "PASS" || !force) {
+                context.ui?.notify?.(formatReceiptSummary(receipt, diff), receiptLevel(receipt.verdict));
             }
             if (this.root !== undefined) {
                 this.baseline = await captureGitSnapshot(this.root);

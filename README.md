@@ -12,7 +12,7 @@ repository.
 ## Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.3
+pi install git:github.com/pauleschwarz/pi-verity@v0.1.4
 ```
 
 Then use Pi normally. Inside a Git repository, check the installation once:
@@ -21,8 +21,10 @@ Then use Pi normally. Inside a Git repository, check the installation once:
 /verity doctor
 ```
 
-That's it. Verity watches repository-changing agent turns, runs the checks it
-can prove, and stays quiet when they pass.
+That's it. Verity watches repository-changing agent turns, plans only the checks
+a patch can actually prove, and stays quiet when they pass. Docs-only edits skip
+full verification. Ambient PASS lines stay one fact line: files, `+added/-removed`,
+milliseconds.
 
 ## A test that proves nothing
 
