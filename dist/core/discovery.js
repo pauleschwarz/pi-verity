@@ -12,6 +12,7 @@ async function exists(path) {
     }
 }
 const destructive = /(?:^|[;&|]\s*)(?:sudo\s+)?(?:rm\s+-[^\n]*r|git\s+(?:clean|reset)|npm\s+publish|cargo\s+publish|go\s+clean|[^\n]*(?:deploy|push)\b)/i;
+const unverifiedNarrowing = /[*?{}[\]]|&&|\|\||[;&|<>]|\$\(|\b(?:npm|pnpm|yarn|bun)\s+(?:run|exec)\b/;
 function commandKind(name) {
     if (name === "test")
         return "test";
@@ -60,6 +61,7 @@ export async function discoverVerification(root) {
                             source: "package.json",
                             kind: commandKind(name),
                             command: [runner, ...args],
+                            narrowing: unverifiedNarrowing.test(script) ? "unverified" : "safe",
                         });
                     }
                 }
@@ -80,6 +82,7 @@ export async function discoverVerification(root) {
                     source: "pyproject.toml",
                     kind: "test",
                     command: ["python3", "-m", "pytest"],
+                    narrowing: "safe",
                 });
             }
         }
@@ -92,6 +95,7 @@ export async function discoverVerification(root) {
             source: "Cargo.toml",
             kind: "test",
             command: ["cargo", "test"],
+            narrowing: "unverified",
         });
     }
     if (commands.length === 0 && (await exists(join(root, "go.mod")))) {
@@ -99,6 +103,7 @@ export async function discoverVerification(root) {
             source: "go.mod",
             kind: "test",
             command: ["go", "test", "./..."],
+            narrowing: "safe",
         });
     }
     return { commands, warnings };

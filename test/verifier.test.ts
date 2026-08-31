@@ -221,6 +221,7 @@ test("Python, Rust, Go, and Node lockfile discovery uses deterministic commands"
     "-m",
     "pytest",
   ]);
+  assert.equal((await discoverVerification(root)).commands[0]?.narrowing, "safe");
   await rm(join(root, "pyproject.toml"));
   await writeFile(
     join(root, "Cargo.toml"),
@@ -230,6 +231,11 @@ test("Python, Rust, Go, and Node lockfile discovery uses deterministic commands"
     "cargo",
     "test",
   ]);
+  assert.equal((await discoverVerification(root)).commands[0]?.narrowing, "unverified");
+  assert.equal(
+    (await discoverVerification(root)).commands[0]?.command.join(" "),
+    "cargo test",
+  );
   await rm(join(root, "Cargo.toml"));
   await writeFile(join(root, "go.mod"), "module example.invalid/fixture\n\ngo 1.22\n");
   assert.deepEqual((await discoverVerification(root)).commands[0]?.command, [
@@ -237,6 +243,7 @@ test("Python, Rust, Go, and Node lockfile discovery uses deterministic commands"
     "test",
     "./...",
   ]);
+  assert.equal((await discoverVerification(root)).commands[0]?.narrowing, "safe");
   await rm(join(root, "go.mod"));
   await writeFile(
     join(root, "package.json"),
@@ -248,6 +255,7 @@ test("Python, Rust, Go, and Node lockfile discovery uses deterministic commands"
     "run",
     "test",
   ]);
+  assert.equal((await discoverVerification(root)).commands[0]?.narrowing, "safe");
 });
 
 test("command output is truncated at the configured bound", async () => {

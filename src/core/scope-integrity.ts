@@ -289,17 +289,14 @@ function publicApiLines(path: string, lines: string[]): string[] {
   });
 }
 
-function testDeclarations(source: string): string[] {
-  const declarations: string[] = [];
+function testDeclarationCount(source: string): number {
+  let count = 0;
   for (const line of source.split(/\r?\n/)) {
-    const javascript =
-      /\b(describe|context|it|test)(?:\.skip)?\s*\(\s*(["'`])([^"'`]+)\2/.exec(line);
-    if (javascript)
-      declarations.push(`${javascript[1] ?? "test"}:${javascript[3] ?? ""}`);
-    const python = /^\s*(?:async\s+)?def\s+(test_[A-Za-z0-9_]*)\s*\(/.exec(line);
-    if (python) declarations.push(`test:${python[1] ?? ""}`);
+    if (/\b(?:describe|context|it|test)(?:\.skip)?\s*\(\s*(["'`])[^"'`]+\1/.test(line))
+      count += 1;
+    if (/^\s*(?:async\s+)?def\s+test_[A-Za-z0-9_]*\s*\(/.test(line)) count += 1;
   }
-  return declarations;
+  return count;
 }
 
 function inspectChange(change: Change): ScopeSignal[] {
@@ -359,10 +356,15 @@ function inspectChange(change: Change): ScopeSignal[] {
       ),
     );
 
-  const skipped = matching(
-    added,
-    /(?:\b(?:describe|context|it|test)\.skip\s*\(|\b(?:xdescribe|xcontext|xit|xtest)\s*\(|@pytest\.mark\.skip\b|@unittest\.skip\b|#\s*\[ignore\])/,
-  );
+  // Require statement/directive shape so detector source, string fixtures, and
+  // generated copies of those patterns are not themselves treated as gaming.
+  const generatedPath = GENERATED_PATH.test(path);
+  const skipped = generatedPath
+    ? []
+    : matching(
+        added,
+        /^\s*(?:(?:describe|context|it|test)\.skip|(?:xdescribe|xcontext|xit|xtest))\s*\(|^\s*@pytest\.mark\.skip\b|^\s*@unittest\.skip\b|^\s*#\s*\[ignore\]/,
+      );
   if (skipped.length > 0)
     signals.push(
       signal(
@@ -375,10 +377,12 @@ function inspectChange(change: Change): ScopeSignal[] {
       ),
     );
 
-  const lintSuppressions = matching(
-    added,
-    /(?:eslint-disable|biome-ignore\s+lint|stylelint-disable|pylint:\s*disable|#\s*noqa\b|rubocop:\s*(?:disable|todo)|golangci-lint)/i,
-  );
+  const lintSuppressions = generatedPath
+    ? []
+    : matching(
+        added,
+        /(?:\/\/|\/\*|#)\s*(?:eslint-disable|biome-ignore\s+lint|stylelint-disable|pylint:\s*disable|noqa\b|rubocop:\s*(?:disable|todo))|golangci-lint\s+disable/i,
+      );
   if (lintSuppressions.length > 0)
     signals.push(
       signal(
@@ -391,10 +395,12 @@ function inspectChange(change: Change): ScopeSignal[] {
       ),
     );
 
-  const typeSuppressions = matching(
-    added,
-    /(?:@ts-(?:ignore|nocheck|expect-error)|#\s*type:\s*ignore\b|#\s*pyright:\s*ignore\b|#\s*mypy:\s*ignore-errors\b)/i,
-  );
+  const typeSuppressions = generatedPath
+    ? []
+    : matching(
+        added,
+        /(?:\/\/|\/\*)\s*@ts-(?:ignore|nocheck|expect-error)|#\s*type:\s*ignore\b|#\s*pyright:\s*ignore\b|#\s*mypy:\s*ignore-errors\b/i,
+      );
   if (typeSuppressions.length > 0)
     signals.push(
       signal(
@@ -418,19 +424,17 @@ function inspectChange(change: Change): ScopeSignal[] {
       ),
     );
   else if (TEST_PATH.test(path) && skipped.length === 0) {
-    const declarationChanges = addedAndRemoved(
-      testDeclarations(beforeText).join("\n"),
-      testDeclarations(afterText).join("\n"),
-    );
-    if (declarationChanges.removed.length > 0)
+    const beforeDeclarationCount = testDeclarationCount(beforeText);
+    const afterDeclarationCount = testDeclarationCount(afterText);
+    if (afterDeclarationCount < beforeDeclarationCount)
       signals.push(
         signal(
           "FAIL",
           "SCOPE_TEST_DELETED",
           path,
           "test declaration removed",
-          "Named test declarations present in the baseline are absent from the candidate.",
-          declarationChanges.removed.map((line) => `- ${line}`),
+          "The candidate contains fewer recognized test declarations than the baseline.",
+          [`- declarations: ${beforeDeclarationCount} → ${afterDeclarationCount}`],
         ),
       );
   }

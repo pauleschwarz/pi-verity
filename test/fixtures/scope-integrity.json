@@ -31,6 +31,18 @@
     "expected": { "code": "SCOPE_TEST_DELETED", "severity": "FAIL", "file": "tests/date.test.ts" }
   },
   {
+    "name": "test title renamed",
+    "before": { "test/date.test.ts": "test('old title', () => {});\n" },
+    "after": { "test/date.test.ts": "test('new title', () => {});\n" },
+    "expected": null
+  },
+  {
+    "name": "test declaration split",
+    "before": { "test/date.test.ts": "test('combined', () => {});\n" },
+    "after": { "test/date.test.ts": "test('part one', () => {});\ntest('part two', () => {});\n" },
+    "expected": null
+  },
+  {
     "name": "test skipped",
     "before": { "test/date.test.ts": "test('formats', () => {});\n" },
     "after": { "test/date.test.ts": "test.skip('formats', () => {});\n" },
