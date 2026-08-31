@@ -141,6 +141,7 @@ export interface VerificationCommand {
   kind: "test" | "check" | "lint";
   command: string[];
   narrowing: "safe" | "unverified";
+  packageScript?: string;
 }
 
 export interface CommandResult extends VerificationCommand {
