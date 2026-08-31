@@ -18,8 +18,14 @@ npm pack --dry-run
 
 Also run the Golden Demo, a real Pi extension load, `/verity doctor`, `/verity`,
 and `/verity why`. Check README links, the package allowlist, receipt schema, and
-the moved GitHub community files. `dist/` is committed release output: after the
-build, `git diff --exit-code -- dist` must be clean.
+the moved GitHub community files.
+
+Schema rule: `SCHEMA_VERSION` in `src/core/types.ts` must match a schema file
+`schemas/proof-receipt.v<N>.schema.json` whose `$id` and `schema_version` const
+agree. Older schema files are historical release facts and must never be edited
+in place; a receipt-format change requires a new file and a version bump.
+`dist/` is committed release output: after the build, `git diff --exit-code -- dist`
+must be clean.
 
 Record the exact result under [`docs/evidence/`](../evidence/README.md).
 

@@ -2,6 +2,46 @@
 
 All notable changes are documented here. The project follows Semantic Versioning.
 
+## Unreleased
+
+## [0.2.0] - 2026-08-31
+
+### Added
+
+- Optional pre-execution tool approval with
+  `PI_VERITY_EXECUTION_POLICY=mutating|all` (default remains `off`).
+- Explicit fail-closed behavior when approval UI is unavailable.
+- Deterministic `pi-verity-policy` session events and `/verity policy`.
+- Persistent keyed Pi status via `ctx.ui.setStatus("pi-verity", ...)` with
+  states: observing, change pending, verifying, proven, warning, unproven,
+  failed, blocked, approval required.
+- ProofReceipt schema version 4 with deterministic `test_delta` and bounded
+  `effect_evidence`, published as `schemas/proof-receipt.v4.schema.json`.
+  Schema version 3 stays unchanged at `schemas/proof-receipt.v3.schema.json`
+  for receipts written by v0.1.5 and earlier.
+- Verification commands and counterfactual evidence record `narrowing`
+  (`safe` or `unverified`) so unnarrowed suite runs are visible as weaker
+  counterfactual evidence.
+- Scope signal `SCOPE_TEST_RENAMED`.
+
+### Changed
+
+- Ambient PASS is status-only: no notifications, messages, or transcript entries
+  on successful automatic verification; explicit `/verity` and non-PASS outcomes
+  still notify.
+- The Pi adapter locks an explicitly approved JSON-shaped tool input against
+  later in-place extension mutation before execution.
+- `/verity doctor` reports execution-policy mode and fail-closed behavior.
+- Test title renames/splits no longer trigger terminal scope deletion failures;
+  true test-file/declaration reductions remain blocking.
+- `test:unit` and `test:integration` cover the new test files.
+
+### Notes
+
+- Schema version 4 is a receipt-format change; package version is `0.2.0`.
+- Execution policy is opt-in governance and does not alter ProofReceipt verdicts.
+- Status uses Pi semantic theme colors only; no hard-coded ANSI.
+
 ## [0.1.5] - 2026-08-30
 
 ### Fixed
@@ -15,6 +55,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 - v0.1.5 is a corrective release on top of the immutable v0.1.4 ambient
   verification release.
+- v0.1.5 ships ProofReceipt schema version 3.
 - npm publication remains unauthorized and unclaimed.
 
 ## [0.1.4] - 2026-08-30
@@ -44,8 +85,8 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Notes
 
-- ProofReceipt remains schema version 3; no receipt field or classification was added.
-- Install from Git tag `v0.1.4`. npm publication remains unauthorized and unclaimed.
+- v0.1.5 and every earlier release ship ProofReceipt schema version 3.
+- Install from Git tag `v0.1.5`. npm publication remains unauthorized and unclaimed.
 - v0.1.3 remains the last packaging-only install fix; v0.1.4 is the first proof-selection
   and ambient UX release on top of that install path.
 
@@ -59,7 +100,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 ### Notes
 
 - v0.1.2 remains immutable but its Git-source install fails because its prepare script requires the omitted TypeScript dev dependency. Use v0.1.3.
-- Runtime proof semantics and ProofReceipt schema v3 are unchanged from v0.1.2.
+- Runtime proof semantics and ProofReceipt schema v3 remain unchanged from v0.1.2.
 - npm publication remains unauthorized and unclaimed.
 
 ## [0.1.2] - 2026-08-29
@@ -80,7 +121,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Notes
 
-- ProofReceipt remains schema version 3; no receipt field or classification was added.
+- ProofReceipt schema version 3 is used by v0.1.2.
 - Install from Git tag `v0.1.2`. npm publication remains unauthorized and unclaimed.
 - Existing `v0.1.0` and `v0.1.1` tags are unchanged.
 
@@ -125,7 +166,7 @@ All notable changes are documented here. The project follows Semantic Versioning
 - Re-entrancy protection for overlapping automatic and explicit verification.
 - Exact repair baselines so automatic follow-ups retain counterfactual RED/GREEN protection.
 - Scope Integrity signals with `FAIL`, `WARNING`, and `INFORMATION` severity.
-- ProofReceipt schema version 3 and a distributable JSON Schema.
+- ProofReceipt schema version 3 and a distributable JSON Schema are included.
 - GitHub issue templates, pinned CI, manual release-check workflow, release notes configuration, and Dependabot configuration.
 - Separate unit and integration test scripts.
 

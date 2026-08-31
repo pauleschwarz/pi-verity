@@ -5,7 +5,7 @@ Install once, use Pi normally, inspect Verity only when you need detail.
 ## Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.5
+pi install git:github.com/pauleschwarz/pi-verity@v0.2.0
 ```
 
 The package is installed from the GitHub release tag. Pi Verity is not
@@ -14,7 +14,14 @@ published to npm.
 Inside a Git repository:
 
 ```bash
+# Existing behavior; execution policy is off by default.
 pi
+
+# Gate side-effect-capable and unknown agent tools.
+PI_VERITY_EXECUTION_POLICY=mutating pi
+
+# Require approval for every agent tool call.
+PI_VERITY_EXECUTION_POLICY=all pi
 ```
 
 ```text
@@ -63,7 +70,8 @@ pretend a missing import or symbol is a useful regression failure.
 /verity          concise current verdict
 /verity why      selected checks, signals, and verdict reasons
 /verity run      run verification now
-/verity doctor   local readiness report
+/verity doctor   local readiness and policy configuration
+/verity policy   execution policy and recent decisions
 /verity receipt  persisted path and canonical receipt JSON
 ```
 
@@ -96,15 +104,24 @@ Zero-config discovery selects at most one command:
 Potentially destructive Node script text is rejected. Verity never installs
 missing dependencies.
 
-Two environment variables are supported:
+Three environment variables are supported:
 
 ```bash
+# off (default), mutating, or all.
+PI_VERITY_EXECUTION_POLICY=mutating pi
+
 # Off by default. Allow at most two same-session repair turns after FAIL.
 PI_VERITY_MAX_REPAIR_ATTEMPTS=2 pi
 
 # Explicitly allow network in counterfactual runs.
 PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK=1 pi
 ```
+
+`mutating` exempts only known read-only tools (`read`, `grep`, `find`, and `ls`);
+side-effect-capable and unknown tools require approval. `all` requires Pi's
+explicit confirmation for every agent tool call. If confirmation UI is
+unavailable, protected calls are denied without waiting. Invalid policy values
+are reported by `/verity doctor` and use fail-safe `all` behavior.
 
 `PI_VERITY_MAX_REPAIR_ATTEMPTS` accepts `0..10` and defaults to `0`.
 Counterfactual network denial is enforced on macOS only. On unsupported

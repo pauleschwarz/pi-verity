@@ -12,7 +12,7 @@ repository.
 ## Install
 
 ```bash
-pi install git:github.com/pauleschwarz/pi-verity@v0.1.5
+pi install git:github.com/pauleschwarz/pi-verity@v0.2.0
 ```
 
 Then use Pi normally. Inside a Git repository, check the installation once:
@@ -24,7 +24,26 @@ Then use Pi normally. Inside a Git repository, check the installation once:
 That's it. Verity watches repository-changing agent turns, plans only the checks
 a patch can actually prove, and stays quiet when they pass. Docs-only edits skip
 full verification. Ambient PASS lines stay one fact line: files, `+added/-removed`,
-milliseconds.
+milliseconds. The keyed `pi-verity` status remains visible in the Pi footer:
+`observing`, `change pending`, `verifying`, `proven`, `warning`, `unproven`,
+`failed`, or `blocked`. Successful checks do not emit notifications, messages,
+or transcript entries.
+
+## Optional execution policy
+
+Verity can also enforce approval before agent tools run.
+
+```bash
+PI_VERITY_EXECUTION_POLICY=all pi
+```
+
+`all` requires explicit approval for every tool call. `mutating` allows known
+read-only tools and gates side-effect-capable or unknown tools. `off` is the
+default.
+
+A denied call is blocked before execution. Later model reasoning does not count
+as renewed permission; a new protected call requires a new explicit approval.
+This is deterministic execution control, not chain-of-thought inspection.
 
 ## A test that proves nothing
 
@@ -66,15 +85,15 @@ import or compile failure into fake regression proof.
 ## How it works
 
 ```text
-agent changes repository
+agent requests action
         ↓
-Verity binds evidence to that repository state
+optional Verity execution policy
         ↓
-runs one conservative repository-defined check
+tool executes
         ↓
-checks scope and test-integrity signals
+repository changes
         ↓
-checks baseline/candidate polarity when it is meaningful
+Verity binds and checks repository evidence
         ↓
 PASS, PASS_WITH_WARNINGS, FAIL, or UNPROVEN
 ```
@@ -96,9 +115,16 @@ still does.
 - green tests that also pass on the old implementation
 - candidate tests that fail on the candidate
 - skipped or deleted tests and removed assertions
+- mechanical test weakening (`test_delta.weakened`)
+- user-stated observable claims contradicted in source (`effect_evidence`)
 - stale receipts after the repository changes again
 - deterministic test, typecheck, lint, and scope failures
 - missing or inconclusive evidence without pretending it passed
+
+Observable claims are extracted from the user's own wording (quoted copy,
+literal style/value/visibility). The agent may only supply location hints via
+`verity_check`; expected values and the final verdict stay with Verity. Source
+observation is not a rendered-UI guarantee.
 
 ## Commands
 
@@ -106,9 +132,14 @@ still does.
 /verity          current concise verdict
 /verity why      checks, signals, and verdict reasons
 /verity run      run verification now
-/verity doctor   local readiness check
+/verity doctor   local readiness and policy configuration
+/verity policy   execution policy and recent decisions
 /verity receipt  receipt path and canonical JSON
 ```
+
+Receipts follow [`schemas/proof-receipt.v4.schema.json`](schemas/proof-receipt.v4.schema.json);
+receipts written by v0.1.5 and earlier follow the unchanged
+[v3 schema](schemas/proof-receipt.v3.schema.json).
 
 These commands are for inspection. They are not a workflow you must remember.
 Automatic repair is off by default; see
@@ -118,8 +149,9 @@ Automatic repair is off by default; see
 
 Verity does not know whether the architecture is elegant, the UX is good, a
 vague requirement was interpreted correctly, or every unknown bug is gone.
-Repository scripts still run with your user privileges; Verity is not an OS
-sandbox.
+It does not start browsers or app runtimes, so it cannot prove what a user
+would see after render. Repository scripts still run with your user privileges;
+Verity is not an OS sandbox.
 
 **Verity doesn't know whether your code is brilliant. It knows whether the
 evidence you have actually supports the change you made.**

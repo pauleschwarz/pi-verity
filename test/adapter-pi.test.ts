@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  configuredRepairLimit,
   explainReceipt,
   formatReceiptSummary,
   minimalFailureEvidence,
@@ -8,9 +9,18 @@ import {
 } from "../src/adapter-pi/index.js";
 import type { ProofReceipt } from "../src/core/types.js";
 
+test("repair limit parser defaults to zero and bounds invalid values", () => {
+  assert.equal(configuredRepairLimit(undefined), 0);
+  assert.equal(configuredRepairLimit("0"), 0);
+  assert.equal(configuredRepairLimit("1"), 1);
+  assert.equal(configuredRepairLimit("11"), 10);
+  assert.equal(configuredRepairLimit("-1"), 0);
+  assert.equal(configuredRepairLimit("invalid"), 0);
+});
+
 function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
   return {
-    schema_version: 3,
+    schema_version: 4,
     task_id: "task-1",
     session_id: "session-1",
     repository_root: "/repo",
@@ -30,6 +40,7 @@ function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
         source: "package.json",
         kind: "test",
         command: ["npm", "test"],
+        narrowing: "safe",
         cwd: "/tmp/repo",
         exit_code: 0,
         duration_ms: 1800,
@@ -50,6 +61,18 @@ function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
       signals: [],
       reason: null,
     },
+    test_delta: {
+      available: false,
+      files_added: 0,
+      files_modified: 0,
+      files_deleted: 0,
+      assertions_added: 0,
+      assertions_removed: 0,
+      skips_added: 0,
+      suppressions_added: 0,
+      weakened: false,
+    },
+    effect_evidence: { claims: [] },
     warnings: [],
     unverified_dimensions: [],
     verdict: "PASS",

@@ -8,6 +8,7 @@ small amount of recorded evidence that is useful outside the tests.
 | [Claim matrix](claim-matrix.md) | PASS | Product claims mapped to deterministic fixtures |
 | [Performance](performance.md) · [raw JSON](performance.json) | recorded | Median/P95 measurements and 0 LLM calls on the deterministic path |
 | [Provider independence](provider-independence.md) | BLOCKED | No claim based on two routes behind one provider |
+| [v0.2.0 release](release-v0.2.0.md) | recorded | Schema v4, bounded effect/test evidence, package and local gate |
 | [v0.1.4 release](release-v0.1.4.md) | recorded | Proof planner, exact-baseline gating, ambient diff-first summaries |
 | [v0.1.3 release](release-v0.1.3.md) | recorded | Git-install fix, full gate, package, Pi load, and demo |
 | [v0.1.2 release](release-v0.1.2.md) | superseded | Semantics/docs release; Git-source install regression fixed in v0.1.3 |

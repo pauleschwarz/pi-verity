@@ -237,17 +237,15 @@ function publicApiLines(path, lines) {
         return line.replace(/\s*\{.*$/, "").trim();
     });
 }
-function testDeclarations(source) {
-    const declarations = [];
+function testDeclarationCount(source) {
+    let count = 0;
     for (const line of source.split(/\r?\n/)) {
-        const javascript = /\b(describe|context|it|test)(?:\.skip)?\s*\(\s*(["'`])([^"'`]+)\2/.exec(line);
-        if (javascript)
-            declarations.push(`${javascript[1] ?? "test"}:${javascript[3] ?? ""}`);
-        const python = /^\s*(?:async\s+)?def\s+(test_[A-Za-z0-9_]*)\s*\(/.exec(line);
-        if (python)
-            declarations.push(`test:${python[1] ?? ""}`);
+        if (/\b(?:describe|context|it|test)(?:\.skip)?\s*\(\s*(["'`])[^"'`]+\1/.test(line))
+            count += 1;
+        if (/^\s*(?:async\s+)?def\s+test_[A-Za-z0-9_]*\s*\(/.test(line))
+            count += 1;
     }
-    return declarations;
+    return count;
 }
 function inspectChange(change) {
     const signals = [];
@@ -268,21 +266,31 @@ function inspectChange(change) {
     const dependenciesAdded = [...afterDependencies].flatMap(([key, value]) => beforeDependencies.has(key) ? [] : [`+ ${value}`]);
     if (dependenciesAdded.length > 0)
         signals.push(signal("WARNING", "SCOPE_DEPENDENCY_ADDED", path, `${dependenciesAdded.length} dependency entr${dependenciesAdded.length === 1 ? "y" : "ies"} added`, "A recognized dependency manifest contains new dependency entries. Dependency necessity is not evaluated.", dependenciesAdded));
-    const skipped = matching(added, /(?:\b(?:describe|context|it|test)\.skip\s*\(|\b(?:xdescribe|xcontext|xit|xtest)\s*\(|@pytest\.mark\.skip\b|@unittest\.skip\b|#\s*\[ignore\])/);
+    // Require statement/directive shape so detector source, string fixtures, and
+    // generated copies of those patterns are not themselves treated as gaming.
+    const generatedPath = GENERATED_PATH.test(path);
+    const skipped = generatedPath
+        ? []
+        : matching(added, /^\s*(?:(?:describe|context|it|test)\.skip|(?:xdescribe|xcontext|xit|xtest))\s*\(|^\s*@pytest\.mark\.skip\b|^\s*@unittest\.skip\b|^\s*#\s*\[ignore\]/);
     if (skipped.length > 0)
         signals.push(signal("FAIL", "SCOPE_TEST_SKIPPED", path, "test-skip directive added", "New lines match explicit skip/ignore syntax from recognized test frameworks.", skipped.map((line) => `+ ${line}`)));
-    const lintSuppressions = matching(added, /(?:eslint-disable|biome-ignore\s+lint|stylelint-disable|pylint:\s*disable|#\s*noqa\b|rubocop:\s*(?:disable|todo)|golangci-lint)/i);
+    const lintSuppressions = generatedPath
+        ? []
+        : matching(added, /(?:\/\/|\/\*|#)\s*(?:eslint-disable|biome-ignore\s+lint|stylelint-disable|pylint:\s*disable|noqa\b|rubocop:\s*(?:disable|todo))|golangci-lint\s+disable/i);
     if (lintSuppressions.length > 0)
         signals.push(signal("FAIL", "SCOPE_LINT_SUPPRESSION_ADDED", path, "lint suppression added", "New lines match explicit suppression syntax from recognized linters.", lintSuppressions.map((line) => `+ ${line}`)));
-    const typeSuppressions = matching(added, /(?:@ts-(?:ignore|nocheck|expect-error)|#\s*type:\s*ignore\b|#\s*pyright:\s*ignore\b|#\s*mypy:\s*ignore-errors\b)/i);
+    const typeSuppressions = generatedPath
+        ? []
+        : matching(added, /(?:\/\/|\/\*)\s*@ts-(?:ignore|nocheck|expect-error)|#\s*type:\s*ignore\b|#\s*pyright:\s*ignore\b|#\s*mypy:\s*ignore-errors\b/i);
     if (typeSuppressions.length > 0)
         signals.push(signal("FAIL", "SCOPE_TYPE_SUPPRESSION_ADDED", path, "type-check suppression added", "New lines match explicit suppression syntax from recognized type checkers.", typeSuppressions.map((line) => `+ ${line}`)));
     if (deletedFile && TEST_PATH.test(path))
         signals.push(signal("FAIL", "SCOPE_TEST_DELETED", path, "test file deleted", "A path recognized as a test file existed in the baseline and no longer exists."));
     else if (TEST_PATH.test(path) && skipped.length === 0) {
-        const declarationChanges = addedAndRemoved(testDeclarations(beforeText).join("\n"), testDeclarations(afterText).join("\n"));
-        if (declarationChanges.removed.length > 0)
-            signals.push(signal("FAIL", "SCOPE_TEST_DELETED", path, "test declaration removed", "Named test declarations present in the baseline are absent from the candidate.", declarationChanges.removed.map((line) => `- ${line}`)));
+        const beforeDeclarationCount = testDeclarationCount(beforeText);
+        const afterDeclarationCount = testDeclarationCount(afterText);
+        if (afterDeclarationCount < beforeDeclarationCount)
+            signals.push(signal("FAIL", "SCOPE_TEST_DELETED", path, "test declaration removed", "The candidate contains fewer recognized test declarations than the baseline.", [`- declarations: ${beforeDeclarationCount} → ${afterDeclarationCount}`]));
     }
     const generated = GENERATED_PATH.test(path) ||
         GENERATED_MARKER.test(beforeText.split(/\r?\n/, 5).join("\n")) ||
