@@ -2,6 +2,42 @@
 
 Pi Verity deliberately avoids claims it cannot justify.
 
+## Execution policy is Pi-bound
+
+Pre-execution enforcement covers agent tool calls that pass through Pi's
+supported `tool_call` extension hook. It does not govern direct user shell
+commands, processes started outside Pi, or another host without an adapter.
+
+## Other extensions matter
+
+Pi runs `tool_call` handlers in extension load order. Earlier handlers can
+mutate the input before Verity sees it; Verity asks approval for that effective
+input. After approval, Verity recursively freezes the JSON-shaped input object
+that Pi's current agent loop later executes. A later in-place mutation therefore
+fails or has no effect, and the originally approved object remains unchanged.
+
+This relies on Pi's current same-object execution semantics. Verity does not
+claim protection from a malicious extension that bypasses Pi's hook, tampers
+with shared runtime internals, or otherwise runs code directly. Extension
+updates should re-check this ordering and object-identity assumption.
+
+## Local policy audit is not attestation
+
+`pi-verity-policy` entries are local session evidence. An actor with the same
+filesystem permissions can modify them. They are not signed or remotely
+attested.
+
+## No reasoning inspection
+
+Verity does not read or judge private model reasoning. Natural-language intent
+cannot create an approval; the gate enforces observable runtime decisions only.
+
+## Not an OS sandbox
+
+An approved tool still runs with the privileges of the underlying Pi process.
+Execution approval is not process isolation, capability restriction, or a
+container boundary.
+
 ## Passing is not total correctness
 
 A passing receipt means the selected deterministic checks passed for the
@@ -33,6 +69,40 @@ but that workspace was not captured, the result is `BASELINE_UNAVAILABLE`, not
 fabricated RED evidence. The planner refuses to select counterfactual comparison
 without that baseline; absence of comparison is explicit evidence, not a silent
 skip.
+
+## Effect evidence is bounded and partial
+
+`effect_evidence` records what a cheap sensor could observe for each extracted
+claim. Source observation is a bounded text scan: it stops at a maximum file
+count and file size, skips common vendor and build directories, and can only
+support presence, absence, or literal value claims. `SOURCE_OBSERVED` therefore
+means found in source, not true at runtime. Runtime observation is only recorded
+when a runtime sensor was actually supplied; otherwise the claim stays
+`UNCHECKED`, which is an explicit absence of evidence, not a pass.
+
+Claims and expected values are Verity-owned. Agent-supplied probe hints are
+location-only and can never introduce an expected value or a verdict.
+
+## Test delta is mechanical, not qualitative
+
+`test_delta` counts files, assertions, skips, and suppressions with
+syntax-level rules. `weakened: true` observes that evidence shrank; it does not
+prove the patch is wrong, and `weakened: false` does not prove test quality.
+Renames, moves, and generated tests can distort the counts.
+
+## Command narrowing is conservative
+
+Counterfactual runs prefer to execute only the candidate test. When the
+discovered command uses shell expansion, pipelines, or its own glob, narrowing
+cannot be verified and `narrowing` is `unverified`: the full suite may run, so
+an unrelated failure can influence the classification. Treat `unverified`
+narrowing as weaker counterfactual evidence.
+
+## Verification workspaces omit dependencies
+
+Disposable copies exclude `.git` and `node_modules`. Checks that require locally
+installed executables or vendored dependencies can fail or be reported as
+inconclusive in the copy even though they pass in the original worktree.
 
 ## Repository scripts are trusted code
 

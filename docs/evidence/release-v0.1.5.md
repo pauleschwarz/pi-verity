@@ -2,6 +2,9 @@
 
 **Date:** 2026-08-30
 
+> Historical evidence for the immutable v0.1.5 tag. It does not describe the
+> unreleased schema-v4 work in the current working tree.
+
 v0.1.5 is a corrective release for the counterfactual proof planner. It keeps
 planning deterministic and baseline-agnostic while preserving an explicit
 `BASELINE_UNAVAILABLE` classification when the verifier has no exact pre-change
@@ -29,4 +32,4 @@ workspace to compare.
 | CI Node 20/22 | required before merge |
 | Remote Pi extension smoke | required after tag publication |
 
-No npm publication is performed or claimed. Existing tags remain immutable.
+No npm publication is performed or claimed. Existing tags remain immutable. The current working tree contains unreleased development changes; they are not part of the v0.1.5 release evidence.
