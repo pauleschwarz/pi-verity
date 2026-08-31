@@ -171,3 +171,38 @@ test("failure evidence is bounded and redacts common secret assignments", () => 
   assert.doesNotMatch(evidence, /super-secret-value/);
   assert.ok(evidence.length < 1200);
 });
+
+test("candidate failure evidence includes the failing candidate output", () => {
+  const passingCommand = receipt().verification_commands[0];
+  assert.ok(passingCommand);
+  const failed = receipt({
+    verification_commands: [passingCommand],
+    counterfactual: {
+      classification: "CANDIDATE_FAILS",
+      patch_polarity: "UNDETERMINED",
+      candidate_test_files: ["test/behavior.test.js"],
+      command: ["npm", "run", "test"],
+      baseline_result: {
+        ...passingCommand,
+        exit_code: 1,
+        stderr: "baseline unrelated noise",
+      },
+      candidate_result: {
+        ...passingCommand,
+        exit_code: 1,
+        stderr: "AssertionError: expected 1 to equal 2",
+      },
+      narrowing: "safe",
+      anti_gaming_signals: [],
+      network_policy: "denied",
+      workspace_bytes: 0,
+      diagnosis: "Candidate implementation does not pass the candidate test",
+    },
+    verdict: "FAIL",
+  });
+
+  const evidence = minimalFailureEvidence(failed);
+  assert.match(evidence, /counterfactual · Candidate implementation does not pass/);
+  assert.match(evidence, /AssertionError: expected 1 to equal 2/);
+  assert.doesNotMatch(evidence, /baseline unrelated noise/);
+});

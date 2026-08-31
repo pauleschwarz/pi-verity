@@ -62,6 +62,7 @@ export async function discoverVerification(root) {
                             kind: commandKind(name),
                             command: [runner, ...args],
                             narrowing: unverifiedNarrowing.test(script) ? "unverified" : "safe",
+                            packageScript: script,
                         });
                     }
                 }

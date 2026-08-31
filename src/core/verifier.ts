@@ -324,6 +324,5 @@ export async function verifyRepository(options: VerifyOptions): Promise<ProofRec
       effectEvidence,
     }),
   };
-  await options.counterfactualBaseline?.cleanup();
   return receipt;
 }

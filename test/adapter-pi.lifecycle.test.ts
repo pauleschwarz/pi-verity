@@ -278,8 +278,9 @@ test("automatic repair keeps an exact counterfactual baseline", async () => {
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
-    await writeFile(join(root, ".env"), "EXAMPLE_ONLY=1\n");
+    // tool_call fires before the tool's effect in Pi, so the event precedes the write.
     await fake.events.get("tool_call")?.({ toolName: "write" }, context);
+    await writeFile(join(root, ".env"), "EXAMPLE_ONLY=1\n");
     await fake.events.get("agent_settled")?.({}, context);
 
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
@@ -287,13 +288,13 @@ test("automatic repair keeps an exact counterfactual baseline", async () => {
     assert.equal(fake.messages[0]?.options?.triggerTurn, true);
     assert.equal(fake.messages[0]?.options?.deliverAs, "followUp");
 
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
     await unlink(join(root, ".env"));
     await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
     await writeFile(
       join(root, "value.test.mjs"),
       'import assert from "node:assert/strict";\nimport { value } from "./value.mjs";\nassert.equal(value, 2);\n',
     );
-    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
     await fake.events.get("agent_settled")?.({}, context);
 
     const receiptPath = fake.entries.at(-1)?.receiptPath;
@@ -327,12 +328,13 @@ test("unset repair limit is passive by default", async () => {
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
-    await writeFile(join(root, ".env"), "EXAMPLE_ONLY=1\n");
     await fake.events.get("tool_call")?.({ toolName: "write" }, context);
+    await writeFile(join(root, ".env"), "EXAMPLE_ONLY=1\n");
     await fake.events.get("agent_settled")?.({}, context);
 
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
     assert.equal(fake.messages.at(-1)?.options?.triggerTurn, false);
+    assert.match(fake.messages.at(-1)?.content ?? "", /automatic repair is disabled/);
   } finally {
     if (previousLimit === undefined) {
       Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
@@ -358,21 +360,18 @@ test("PASS does not trigger repair when repair is enabled", async () => {
   const context = fake.context(root);
   try {
     await fake.events.get("session_start")?.({}, context);
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
     await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
     await writeFile(
       join(root, "value.test.mjs"),
       'import assert from "node:assert/strict";\nimport { value } from "./value.mjs";\nassert.equal(value, 2);\n',
     );
-    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
     await fake.events.get("agent_settled")?.({}, context);
 
     assert.equal(fake.entries.at(-1)?.verdict, "PASS");
     assert.equal(fake.messages.length, 0);
     assert.equal(fake.notices.length, 0);
-    assert.match(
-      fake.statuses.at(-1)?.value ?? "",
-      /^pi-verity · proven · repository verified$/,
-    );
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · proven$/);
   } finally {
     if (previousLimit === undefined) {
       Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
@@ -816,10 +815,7 @@ test("status initializes, tracks mutations, and clears only on shutdown", async 
 
     await fake.events.get("agent_settled")?.({}, context);
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
-    assert.match(
-      fake.statuses.at(-1)?.value ?? "",
-      /^pi-verity · failed · verification failed$/,
-    );
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · failed$/);
     assert.ok(fake.notices.length >= 1);
     assert.match(fake.notices.at(-1) ?? "", /FAIL|failed|UNPROVEN|verity/i);
 
@@ -839,6 +835,7 @@ test("approval required is visible before confirm and recovers after allow or de
     const allowFake = fakePi([true]);
     piVerity(allowFake.api);
     const allowContext = allowFake.context(process.cwd());
+    await allowFake.events.get("session_start")?.({}, allowContext);
     const allowResult = await allowFake.events.get("tool_call")?.(
       {
         toolName: "bash",
@@ -861,6 +858,7 @@ test("approval required is visible before confirm and recovers after allow or de
     const denyFake = fakePi([false]);
     piVerity(denyFake.api);
     const denyContext = denyFake.context(process.cwd());
+    await denyFake.events.get("session_start")?.({}, denyContext);
     const denyResult = (await denyFake.events.get("tool_call")?.(
       {
         toolName: "bash",
@@ -959,7 +957,49 @@ test("blocked status resists lower-priority overwrite until recovery", async () 
     await fake.events.get("agent_settled")?.({}, context);
     assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
 
+    // Calm UI: a new prompt never demotes the visible state either.
     await fake.events.get("input")?.({ text: "continue" }, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
   });
+});
+
+test("outside a git repository verity stays silent", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-verity-nongit-"));
+  const fake = fakePi();
+  piVerity(fake.api);
+  const context = fake.context(root);
+  try {
+    await fake.events.get("session_start")?.({}, context);
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
+    await fake.events.get("agent_settled")?.({}, context);
+
+    assert.equal(fake.entries.length, 0);
+    assert.equal(fake.messages.length, 0);
+    assert.equal(fake.notices.length, 0);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · observing$/);
+  } finally {
+    await fake.events.get("session_shutdown")?.({}, context);
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a prompt does not demote the last verdict", async () => {
+  const root = await createFixture();
+  const fake = fakePi();
+  piVerity(fake.api);
+  const context = fake.context(root);
+  try {
+    await fake.events.get("session_start")?.({}, context);
+    await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
+    await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
+    await fake.events.get("agent_settled")?.({}, context);
+    assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
+
+    await fake.events.get("input")?.({ text: "next task" }, context);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · failed$/);
+  } finally {
+    await fake.events.get("session_shutdown")?.({}, context);
+    await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
+    await rm(root, { recursive: true, force: true });
+  }
 });
