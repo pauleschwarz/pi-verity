@@ -2,6 +2,9 @@
 
 **Your agent says it's done. Verity checks the evidence.**
 
+[![npm](https://img.shields.io/npm/v/@pauleschwarz/pi-verity)](https://www.npmjs.com/package/@pauleschwarz/pi-verity)
+[![CI](https://github.com/pauleschwarz/pi-verity/actions/workflows/ci.yml/badge.svg)](https://github.com/pauleschwarz/pi-verity/actions/workflows/ci.yml)
+
 A coding agent can write the implementation, the test, and the "tests pass"
 conclusion. Pi Verity puts a deterministic gate between that claim and your
 trust in the patch.
@@ -21,13 +24,18 @@ Then use Pi normally. Inside a Git repository, check the installation once:
 /verity doctor
 ```
 
-That's it. Verity watches repository-changing agent turns, plans only the checks
-a patch can actually prove, and stays quiet when they pass. Docs-only edits skip
-full verification. Ambient PASS lines stay one fact line: files, `+added/-removed`,
-milliseconds. The keyed `pi-verity` status remains visible in the Pi footer:
-`observing`, `change pending`, `verifying`, `proven`, `warning`, `unproven`,
-`failed`, or `blocked`. Successful checks do not emit notifications, messages,
-or transcript entries.
+That's it. From here, Verity runs itself:
+
+- watches repository-changing agent turns and plans only the checks a patch can
+  actually prove
+- stays quiet when checks pass — no notifications, messages, or transcript
+  entries
+- skips full verification for docs-only edits
+- keeps ambient PASS lines to one fact line: files, `+added/-removed`,
+  milliseconds
+- shows a keyed `pi-verity` status in the Pi footer: `observing`,
+  `change pending`, `verifying`, `proven`, `warning`, `unproven`, `failed`, or
+  `blocked`
 
 ## Optional execution policy
 
@@ -177,9 +185,11 @@ See [Limitations](docs/LIMITATIONS.md) for the precise boundaries.
 
 ## Development
 
+Requires Node 20+.
+
 ```bash
 npm ci
-npm run verify
+npm run verify   # typecheck, lint, tests, built-dist parity
 npm run build
 ```
 
