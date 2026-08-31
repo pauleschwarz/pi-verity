@@ -1,4 +1,4 @@
-export declare const VERSION = "0.1.5";
+export declare const VERSION = "0.2.0";
 export type DoctorStatus = "OK" | "WARN" | "ERROR";
 export interface DoctorCheck {
     status: DoctorStatus;

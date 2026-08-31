@@ -6,9 +6,13 @@ const TEST_PATH = /(?:^|\/)(?:__tests__|tests?|spec)(?:\/|$)|(?:\.(?:test|spec)\
 export function isTestPath(path) {
     return TEST_PATH.test(path);
 }
-const SKIP = /\b(?:it|test|describe)\.skip\s*\(|\b(?:xit|xtest)\s*\(|@pytest\.mark\.skip\b|#\[ignore\]|\bt\.Skip\s*\(/g;
-const ASSERTION = /\b(?:expect|assert(?:Equal|True|False|Raises)?|assert\.|should\.|require\.|t\.(?:Error|Fatal))\s*\(?/g;
-const SUPPRESSION = /(?:eslint-disable|@ts-ignore|@ts-nocheck|type:\s*ignore|noqa|pragma:\s*no cover|coverage:\s*ignore|#\[allow\()/g;
+/**
+ * Shared mechanical detectors. Exported so the test-delta summary reuses this
+ * single engine instead of maintaining a parallel set of rules.
+ */
+export const SKIP = /\b(?:it|test|describe)\.skip\s*\(|\b(?:xit|xtest)\s*\(|@pytest\.mark\.skip\b|#\[ignore\]|\bt\.Skip\s*\(/g;
+export const ASSERTION = /\b(?:expect|assert(?:Equal|True|False|Raises)?|assert\.|should\.|require\.|t\.(?:Error|Fatal))\s*\(?/g;
+export const SUPPRESSION = /(?:eslint-disable|@ts-ignore|@ts-nocheck|type:\s*ignore|noqa|pragma:\s*no cover|coverage:\s*ignore|#\[allow\()/g;
 const UNCONDITIONAL = /\b(?:assert\s+true|expect\s*\(\s*true\s*\)\.toBe\s*\(\s*true\s*\)|pass\s*(?:#.*)?$|return\s*;?\s*$)/gim;
 const SKIP_DIRS = new Set([
     ".git",
@@ -45,7 +49,7 @@ async function text(path) {
         throw error;
     }
 }
-function count(pattern, value) {
+export function count(pattern, value) {
     return [...value.matchAll(pattern)].length;
 }
 function antiGaming(file, before, after) {
@@ -89,6 +93,8 @@ function antiGaming(file, before, after) {
     return signals;
 }
 function narrow(command, testFiles) {
+    if (command.narrowing !== "safe")
+        return command;
     if (command.source === "package.json")
         return { ...command, command: [...command.command, "--", ...testFiles] };
     if (command.source === "pyproject.toml")
@@ -188,6 +194,7 @@ export async function runCounterfactual(options) {
         command: null,
         baseline_result: null,
         candidate_result: null,
+        narrowing: options.command?.narrowing ?? "unverified",
         anti_gaming_signals: signals,
         network_policy: networkPolicy(options),
         workspace_bytes: options.baseline.size_bytes,
@@ -197,6 +204,13 @@ export async function runCounterfactual(options) {
             ...baseEvidence,
             classification: "TEST_NOT_PORTABLE",
             diagnosis: "No narrow test command is available",
+        };
+    }
+    if (options.command.narrowing !== "safe") {
+        return {
+            ...baseEvidence,
+            classification: "INCONCLUSIVE",
+            diagnosis: "Test command narrowing could not be verified safely",
         };
     }
     if (!options.allowNetwork && process.platform !== "darwin") {
@@ -254,6 +268,7 @@ export async function runCounterfactual(options) {
             command: command.command,
             baseline_result: baselineResult,
             candidate_result: candidateResult,
+            narrowing: command.narrowing,
             workspace_bytes: options.baseline.size_bytes + candidateWorkspace.size_bytes,
         };
     }

@@ -245,6 +245,21 @@ test("exports CSV", () => assert.equal(exportCsv(), "name\\nAda\\n"));
   assert.ok(receipt.verdict === "PASS" || receipt.verdict === "PASS_WITH_WARNINGS");
 });
 
+test("unverified package narrowing is inconclusive", async () => {
+  const root = await repository(undefined, "node --test test/*.test.js");
+  const capture = await captured(root);
+  await writeFile(
+    join(root, "source.js"),
+    "export function enabled() { return true; }\n",
+  );
+  await mkdir(join(root, "test"));
+  await writeFile(join(root, "test", "behavior.test.js"), usefulTest);
+  const receipt = await verify(root, capture);
+  assert.equal(receipt.counterfactual?.narrowing, "unverified");
+  assert.equal(receipt.counterfactual?.classification, "INCONCLUSIVE");
+  assert.equal(receipt.verdict, "UNPROVEN");
+});
+
 test("a broken candidate remains a failure", async () => {
   const root = await repository();
   const capture = await captured(root);

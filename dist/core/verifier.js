@@ -1,9 +1,11 @@
 import { runCounterfactual } from "./counterfactual.js";
 import { discoverVerification } from "./discovery.js";
+import { contradictedEffects, EMPTY_EFFECT_EVIDENCE, proveEffects, uncheckedEffects, } from "./effect-proof.js";
 import { captureGitSnapshot, changedFiles, findRepositoryRoot, NotGitRepositoryError, } from "./git.js";
 import { planProof } from "./planner.js";
 import { runCommand } from "./process.js";
 import { analyzeScopeIntegrity, } from "./scope-integrity.js";
+import { EMPTY_TEST_DELTA, summarizeTestDelta } from "./test-delta.js";
 import { SCHEMA_VERSION, } from "./types.js";
 import { createIsolatedWorkspace, DEFAULT_MAX_WORKSPACE_BYTES } from "./workspace.js";
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -21,13 +23,17 @@ async function analyzeRepositoryScope(root, files, baseline, baselineDirectory) 
     return analyzeScopeIntegrity(scopeOptions);
 }
 function decideVerdict(evidence) {
-    const { changed, baselineDirty, commands, counterfactual, scopeIntegrity, warnings, unverified, } = evidence;
+    const { changed, baselineDirty, commands, counterfactual, scopeIntegrity, warnings, unverified, effectEvidence, } = evidence;
     if (commands.some((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled))
         return "FAIL";
     if (counterfactual?.classification === "CANDIDATE_FAILS")
         return "FAIL";
     if (scopeIntegrity.signals.some((item) => item.severity === "FAIL"))
         return "FAIL";
+    if (effectEvidence.claims.some((claim) => claim.status === "RUNTIME_CONTRADICTED"))
+        return "FAIL";
+    if (effectEvidence.claims.some((claim) => claim.status === "SOURCE_CONTRADICTED"))
+        return "UNPROVEN";
     if (commands.some((result) => result.cancelled || result.timed_out) ||
         unverified.length > 0)
         return "UNPROVEN";
@@ -85,6 +91,8 @@ function emptyReceipt(options, createdAt, error) {
             signals: [],
             reason: error.message,
         },
+        test_delta: { ...EMPTY_TEST_DELTA },
+        effect_evidence: { ...EMPTY_EFFECT_EVIDENCE },
         warnings: [error.message],
         unverified_dimensions: ["repository state", "automated verification"],
         verdict: "UNPROVEN",
@@ -147,6 +155,7 @@ export async function verifyRepository(options) {
             command: null,
             baseline_result: null,
             candidate_result: null,
+            narrowing: "unverified",
             anti_gaming_signals: [],
             network_policy: "unavailable",
             workspace_bytes: 0,
@@ -174,9 +183,38 @@ export async function verifyRepository(options) {
         counterfactual.classification !== "TEST_NOT_PORTABLE") {
         unverified.push(`Counterfactual verification: ${counterfactual.classification}`);
     }
+    if (counterfactual?.narrowing === "unverified") {
+        warnings.push("Counterfactual test command narrowing is unverified");
+    }
     if ((counterfactual?.anti_gaming_signals.length ?? 0) > 0) {
         unverified.push("High-confidence suspicious test weakening detected");
     }
+    const testDeltaOptions = {
+        root,
+        changedFiles: gitChangedFiles,
+        baselineDirty: baseline.dirty,
+    };
+    if (options.counterfactualBaseline?.directory !== undefined)
+        testDeltaOptions.baselineDirectory = options.counterfactualBaseline.directory;
+    else if (baseline.sha !== null)
+        testDeltaOptions.baselineRef = baseline.sha;
+    const testDelta = await summarizeTestDelta(testDeltaOptions);
+    if (testDelta.weakened)
+        warnings.push("Test evidence was mechanically weakened");
+    const effectEvidence = options.observableClaims !== undefined && options.observableClaims.length > 0
+        ? await proveEffects({
+            root,
+            claims: options.observableClaims,
+            ...(options.probeHints ? { hints: options.probeHints } : {}),
+            ...(options.signal ? { signal: options.signal } : {}),
+        })
+        : { ...EMPTY_EFFECT_EVIDENCE };
+    const contradicted = contradictedEffects(effectEvidence);
+    const unchecked = uncheckedEffects(effectEvidence);
+    if (unchecked.length > 0)
+        warnings.push(`${unchecked.length} observable claim(s) unchecked`);
+    if (contradicted.length > 0)
+        unverified.push("Observable effect claim contradicted");
     const receipt = {
         schema_version: SCHEMA_VERSION,
         task_id: options.taskId ?? null,
@@ -190,6 +228,8 @@ export async function verifyRepository(options) {
         verification_commands: results,
         counterfactual,
         scope_integrity: scopeIntegrity,
+        test_delta: testDelta,
+        effect_evidence: effectEvidence,
         warnings,
         unverified_dimensions: unverified,
         verdict: decideVerdict({
@@ -201,6 +241,7 @@ export async function verifyRepository(options) {
             plan,
             warnings,
             unverified,
+            effectEvidence,
         }),
     };
     await options.counterfactualBaseline?.cleanup();

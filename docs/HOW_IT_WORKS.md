@@ -17,17 +17,43 @@ src/cli.ts       optional command-line entry point
 There is no daemon, server, database, telemetry pipeline, reviewer model, or
 secondary agent.
 
+## Control plane and evidence plane
+
+```text
+CONTROL PLANE
+agent tool request
+→ deterministic execution policy
+→ explicit user decision
+→ allow or block
+
+EVIDENCE PLANE
+repository change
+→ deterministic checks
+→ scope and counterfactual evidence
+→ proof verdict
+```
+
+These planes are independent. A blocked tool does not make a repository patch
+`FAIL`, and a passing patch receipt does not retroactively authorize a tool.
+The model may propose an action, but it does not decide whether a user denial
+still applies. Approval is created only by Pi's explicit runtime confirmation.
+
 ## Lifecycle
 
 ```text
+tool request           classify locally; confirm exact protected input or block
 before agent turn      capture Git identity and exact workspace baseline
-agent turn             observe repository-capable tools
+agent turn             observe permitted repository-capable tools
 agent settled          compare state; skip if nothing changed
 proof plan             classify the patch; select only meaningful checks
 verification           run selected bounded checks in disposable copies
 receipt                bind evidence to the final repository-state hash
 later repository edit  report the prior receipt as STALE
 ```
+
+Execution-policy decisions are separate `pi-verity-policy` session entries.
+They contain request hashes and bounded summaries, not proof verdicts or model
+reasoning. Local entries are audit evidence, not tamper-proof attestation.
 
 The planner is deterministic and local. Documentation-only changes skip standard
 verification. Counterfactual comparison is selected only when usable tests and an
@@ -181,12 +207,25 @@ on Pi APIs, but no other host adapter is shipped.
 
 ## Receipt schema
 
-The current machine-readable receipt is schema version 3:
+The current machine-readable receipt is schema version 4:
 
-[`schemas/proof-receipt.v3.schema.json`](../schemas/proof-receipt.v3.schema.json)
+[`schemas/proof-receipt.v4.schema.json`](../schemas/proof-receipt.v4.schema.json)
 
-It records repository identity, command results, counterfactual evidence, scope
-signals, warnings, unresolved dimensions, and the verdict. Receipts are local,
-unsigned evidence, not remote attestation.
+Schema version 3, as shipped by v0.1.5 and earlier, remains available unchanged
+at [`schemas/proof-receipt.v3.schema.json`](../schemas/proof-receipt.v3.schema.json).
+
+A v4 receipt records repository identity, command results, counterfactual
+evidence (with command narrowing safety), scope signals, mechanical
+`test_delta`, bounded `effect_evidence`, warnings, unresolved dimensions, and
+the verdict. Receipts are local, unsigned evidence, not remote attestation.
+
+### New in schema version 4
+
+| Field | Meaning |
+| --- | --- |
+| `test_delta` | mechanical counts of added/modified/deleted test files, assertions, skips and suppressions; `weakened` is a fact, not a verdict |
+| `effect_evidence.claims` | per-claim observation with `expected`, `observed`, and status `SOURCE_OBSERVED`, `RUNTIME_OBSERVED`, `UNCHECKED`, `SOURCE_CONTRADICTED`, or `RUNTIME_CONTRADICTED` |
+| `narrowing` on commands and counterfactual evidence | `safe` when the discovered command could be reduced to the candidate test verifiably, `unverified` otherwise |
+| `SCOPE_TEST_RENAMED` | a test title rename or split, reported instead of a terminal deletion signal |
 
 See [Limitations](LIMITATIONS.md) for what these checks cannot establish.
