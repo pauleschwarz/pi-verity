@@ -1,13 +1,14 @@
+import { readdir, rm } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { formatDoctorReport, runDoctor } from "../core/doctor.js";
 import { EMPTY_EFFECT_EVIDENCE, proveEffects } from "../core/effect-proof.js";
-import { EXECUTION_POLICY_ENV, fingerprintExecutionRequest, formatExecutionPolicyEvent, isKnownReadOnlyTool, lockExecutionInput, parseExecutionPolicy, requiresExecutionApproval, summarizeExecutionRequest, } from "../core/execution-policy.js";
+import { EXECUTION_POLICY_ENV, fingerprintExecutionRequest, formatExecutionPolicyEvent, lockExecutionInput, parseExecutionPolicy, requiresExecutionApproval, summarizeExecutionRequest, } from "../core/execution-policy.js";
 import { captureGitDiffStat, captureGitSnapshot, findRepositoryRoot, } from "../core/git.js";
 import { canonicalJson, sha256 } from "../core/hash.js";
 import { writeReceipt } from "../core/receipt.js";
 import { formatTestDelta } from "../core/test-delta.js";
-import { addProbeHint, createTurnContract, isEmptyContract, renderContractContext, } from "../core/turn-contract.js";
+import { addProbeHint, createTurnContract, renderContractContext, } from "../core/turn-contract.js";
 import { verifyRepository } from "../core/verifier.js";
 import { captureCounterfactualBaseline, } from "../core/workspace.js";
 const VERITY_STATE_PRIORITY = {
@@ -63,6 +64,12 @@ export function renderVerityStatus(state, theme) {
 export function setVerityStatus(context, state) {
     context.ui?.setStatus?.("pi-verity", renderVerityStatus(state, context.ui.theme));
 }
+/**
+ * Observation read-only set. Deliberately narrower than the execution-policy
+ * approval set: anything unknown counts as mutating, and Verity's own check
+ * tool must never flag the turn it belongs to.
+ */
+const OBSERVATION_READ_ONLY = new Set(["read", "grep", "find", "ls", "verity_check"]);
 function receiptLevel(verdict) {
     if (verdict === "FAIL")
         return "error";
@@ -225,6 +232,17 @@ function boundedOutput(result) {
 export function receiptMatchesState(receipt, current) {
     return receipt.final_diff_hash === current.state_hash;
 }
+function receiptUiState(receipt) {
+    // Detail-free labels: the footer renders every extension status on one
+    // shared line, so pi-verity keeps the shortest text that stays unambiguous.
+    if (receipt.verdict === "FAIL")
+        return { kind: "FAILED" };
+    if (receipt.verdict === "UNPROVEN")
+        return { kind: "UNPROVEN" };
+    if (receipt.verdict === "PASS_WITH_WARNINGS")
+        return { kind: "WARNING" };
+    return { kind: "PROVEN" };
+}
 export function minimalFailureEvidence(receipt) {
     const lines = ["pi-verity deterministic failure:"];
     const failedCommand = receipt.verification_commands.find((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled);
@@ -236,6 +254,15 @@ export function minimalFailureEvidence(receipt) {
     }
     else if (receipt.counterfactual?.classification === "CANDIDATE_FAILS") {
         lines.push(`counterfactual · ${receipt.counterfactual.diagnosis}`);
+        const candidateOutput = receipt.counterfactual.candidate_result === null
+            ? undefined
+            : boundedOutput(receipt.counterfactual.candidate_result);
+        const baselineOutput = receipt.counterfactual.baseline_result === null
+            ? undefined
+            : boundedOutput(receipt.counterfactual.baseline_result);
+        const output = candidateOutput ?? baselineOutput;
+        if (output !== undefined)
+            lines.push(output);
     }
     for (const signal of receipt.scope_integrity.signals
         .filter((item) => item.severity === "FAIL")
@@ -261,6 +288,18 @@ function parseSubcommand(args) {
         value === "policy")
         return value;
     return "invalid";
+}
+const MAX_RECEIPTS_PER_ROOT = 50;
+async function pruneReceipts(directory, keep) {
+    try {
+        const entries = await readdir(directory);
+        const receipts = entries.filter((name) => name.endsWith(".json")).sort();
+        const stale = receipts.slice(0, Math.max(0, receipts.length - keep));
+        await Promise.all(stale.map((name) => rm(join(directory, name), { force: true })));
+    }
+    catch {
+        /* pruning is best effort; receipts are diagnostics, not state */
+    }
 }
 class PiVerityRuntime {
     pi;
@@ -292,13 +331,18 @@ class PiVerityRuntime {
             this.updateStatus(context, { kind: "OBSERVING" }, true);
             await this.safeResetBaseline(context);
         });
-        this.pi.on("input", (event, context) => {
+        this.pi.on("input", (event) => {
             const text = event.text ?? "";
             this.turnContract = createTurnContract(text);
-            this.updateStatus(context, { kind: "OBSERVING" }, true);
+            // Calm UI: typing a prompt never demotes the visible verdict; the status
+            // only moves when work actually happens.
         });
-        this.pi.on("before_agent_start", async (event, context) => {
-            await this.safeResetBaseline(context);
+        this.pi.on("before_agent_start", async (event, _context) => {
+            // Per-project init happened at session_start. A turn resets only
+            // turn-scoped bookkeeping, so unchanged repositories are never
+            // re-snapshotted per prompt.
+            this.repositoryOperationObserved = false;
+            this.taskSequence += 1;
             if (this.turnContract === undefined && event.prompt !== undefined)
                 this.turnContract = createTurnContract(event.prompt);
             const injected = renderContractContext(this.turnContract);
@@ -364,7 +408,8 @@ class PiVerityRuntime {
         });
     }
     async runVerityCheck(params, signal) {
-        if (isEmptyContract(this.turnContract)) {
+        const contract = this.turnContract;
+        if (contract === undefined || contract.claims.length === 0) {
             return {
                 content: [
                     {
@@ -375,8 +420,6 @@ class PiVerityRuntime {
                 details: { claims: [] },
             };
         }
-        // SAFETY: isEmptyContract narrows the optional contract to a populated contract.
-        const contract = this.turnContract;
         const rawHints = Array.isArray(params.hints) ? params.hints : [];
         for (const item of rawHints) {
             if (item === null || typeof item !== "object")
@@ -418,7 +461,7 @@ class PiVerityRuntime {
         this.sessionId = context.sessionManager?.getSessionId?.();
         this.root = await findRepositoryRoot(context.cwd ?? process.cwd());
         this.baseline = await captureGitSnapshot(this.root);
-        this.counterfactualBaseline = await captureCounterfactualBaseline(this.root);
+        this.counterfactualBaseline = undefined;
         this.repositoryOperationObserved = false;
         this.taskSequence += 1;
     }
@@ -432,16 +475,24 @@ class PiVerityRuntime {
             this.repositoryOperationObserved = false;
         }
     }
-    observeToolCall(event, context, conservativeUnknown = false, recover = false) {
-        const name = event.toolName;
-        if (conservativeUnknown ||
-            ["write", "edit", "bash", "apply_patch"].includes(name ?? "")) {
-            this.repositoryOperationObserved = true;
-            if (context !== undefined) {
-                const state = { kind: "CHANGE_PENDING" };
-                if (name !== undefined)
-                    state.detail = name;
-                this.updateStatus(context, state, recover);
+    async observeToolCall(event, context, recover = false) {
+        const name = event.toolName?.trim().toLowerCase();
+        if (name === undefined || OBSERVATION_READ_ONLY.has(name))
+            return;
+        if (this.root === undefined)
+            return;
+        this.repositoryOperationObserved = true;
+        if (context !== undefined) {
+            const state = { kind: "CHANGE_PENDING" };
+            state.detail = name;
+            this.updateStatus(context, state, recover);
+        }
+        if (this.counterfactualBaseline === undefined && this.root !== undefined) {
+            try {
+                this.counterfactualBaseline = await captureCounterfactualBaseline(this.root);
+            }
+            catch {
+                this.counterfactualBaseline = undefined;
             }
         }
     }
@@ -501,7 +552,7 @@ class PiVerityRuntime {
     async handleToolCall(event, context) {
         const toolName = event.toolName ?? "";
         if (!requiresExecutionApproval(this.executionPolicy.mode, toolName)) {
-            this.observeToolCall(event, context);
+            await this.observeToolCall(event, context);
             return undefined;
         }
         if (event.toolCallId === undefined ||
@@ -608,7 +659,7 @@ class PiVerityRuntime {
                 terminate: true,
             };
         }
-        this.observeToolCall(event, context, !isKnownReadOnlyTool(toolName), true);
+        await this.observeToolCall(event, context, true);
         if (this.verityUiState?.kind === "APPROVAL_REQUIRED") {
             this.updateStatus(context, { kind: "OBSERVING" }, true);
         }
@@ -641,6 +692,7 @@ class PiVerityRuntime {
         const rootKey = sha256(receipt.repository_root ?? context.cwd ?? process.cwd()).slice(7, 23);
         const file = join(homedir(), ".pi", "agent", "pi-verity", "receipts", rootKey, `${receipt.session_id ?? "session"}-${Date.now()}.json`);
         await writeReceipt(file, receipt);
+        await pruneReceipts(dirname(file), MAX_RECEIPTS_PER_ROOT);
         this.pi.appendEntry("pi-verity", {
             receiptPath: file,
             verdict: receipt.verdict,
@@ -651,8 +703,7 @@ class PiVerityRuntime {
     exposeFailure(receipt) {
         const evidence = minimalFailureEvidence(receipt);
         const limit = configuredRepairLimit();
-        const canRepair = this.automaticRepairAttempts < limit;
-        if (canRepair) {
+        if (limit > 0 && this.automaticRepairAttempts < limit) {
             this.automaticRepairAttempts += 1;
             this.pi.sendMessage({
                 customType: "pi-verity-failure",
@@ -662,9 +713,12 @@ class PiVerityRuntime {
             }, { triggerTurn: true, deliverAs: "followUp" });
             return;
         }
+        const reason = limit === 0
+            ? "automatic repair is disabled (set PI_VERITY_MAX_REPAIR_ATTEMPTS to enable)"
+            : `automatic repair limit reached (${limit}); stop automatic repair`;
         this.pi.sendMessage({
             customType: "pi-verity-failure",
-            content: `${evidence}\nAutomatic repair limit reached (${limit}); stop automatic repair.`,
+            content: `${evidence}\n${reason}.`,
             display: true,
             details: { verdict: receipt.verdict },
         }, { triggerTurn: false, deliverAs: "nextTurn" });
@@ -680,6 +734,10 @@ class PiVerityRuntime {
         }
     }
     async runProof(context, force, announce) {
+        // Outside a git repository there is nothing to prove; staying quiet is the
+        // calm default, not a verification failure.
+        if (this.root === undefined)
+            return undefined;
         if (!force && !this.repositoryOperationObserved)
             return undefined;
         if (!force && this.root !== undefined && this.baseline !== undefined) {
@@ -716,13 +774,7 @@ class PiVerityRuntime {
                     diff = null;
                 }
             }
-            this.updateStatus(context, receipt.verdict === "FAIL"
-                ? { kind: "FAILED", detail: "verification failed" }
-                : receipt.verdict === "UNPROVEN"
-                    ? { kind: "UNPROVEN", detail: "verification incomplete" }
-                    : receipt.verdict === "PASS_WITH_WARNINGS"
-                        ? { kind: "WARNING", detail: "verification passed with warnings" }
-                        : { kind: "PROVEN", detail: "repository verified" }, true);
+            this.updateStatus(context, receiptUiState(receipt), true);
             // Ambient failures remain visible; PASS updates status only unless explicit.
             if (announce || receipt.verdict !== "PASS") {
                 context.ui?.notify?.(formatReceiptSummary(receipt, diff), receiptLevel(receipt.verdict));
@@ -845,13 +897,7 @@ class PiVerityRuntime {
             context.ui?.notify?.("pi-verity ⚠ STALE · repository changed · /verity run", "warning");
             return;
         }
-        this.updateStatus(context, this.lastReceipt.verdict === "FAIL"
-            ? { kind: "FAILED", detail: "verification failed" }
-            : this.lastReceipt.verdict === "UNPROVEN"
-                ? { kind: "UNPROVEN", detail: "verification incomplete" }
-                : this.lastReceipt.verdict === "PASS_WITH_WARNINGS"
-                    ? { kind: "WARNING", detail: "verification passed with warnings" }
-                    : { kind: "PROVEN", detail: "repository verified" }, true);
+        this.updateStatus(context, receiptUiState(this.lastReceipt), true);
         context.ui?.notify?.(formatReceiptSummary(this.lastReceipt), receiptLevel(this.lastReceipt.verdict));
     }
     async handleCommand(args, context) {

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createReadStream, type Dirent } from "node:fs";
+import type { Dirent } from "node:fs";
 import { lstat, open, readdir, readlink } from "node:fs/promises";
 import { extname, isAbsolute, join } from "node:path";
 import { promisify } from "node:util";
@@ -91,12 +91,6 @@ function digestBytes(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-async function digestFile(path: string): Promise<string> {
-  const hash = createHash("sha256");
-  for await (const chunk of createReadStream(path)) hash.update(chunk);
-  return hash.digest("hex");
-}
-
 function missingVersion(): FileVersion {
   return { exists: false, bytes: Buffer.alloc(0), digest: "" };
 }
@@ -113,11 +107,9 @@ async function diskVersion(path: string): Promise<FileVersion> {
     try {
       const bytes = Buffer.alloc(Math.min(stat.size, MAX_FILE_BYTES));
       const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
-      return {
-        exists: true,
-        bytes: bytes.subarray(0, bytesRead),
-        digest: await digestFile(path),
-      };
+      const content = bytes.subarray(0, bytesRead);
+      // Same bounded prefix as gitVersion: identical content must yield identical digests.
+      return { exists: true, bytes: content, digest: digestBytes(content) };
     } finally {
       await handle.close();
     }

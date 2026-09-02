@@ -80,13 +80,34 @@ interface SourceMatch {
   line: number;
 }
 
-/** First occurrence of an exact literal across bounded repository source. */
-async function findLiteral(
+function formatMatch(match: SourceMatch): string {
+  return `${match.file}:${match.line}`;
+}
+
+const LITERAL_SCANNED: ReadonlySet<ObservableClaim["kind"]> = new Set([
+  "EXACT_TEXT_ABSENT",
+  "EXACT_TEXT_PRESENT",
+  "STYLE_VALUE",
+  "NUMERIC_UI_VALUE",
+]);
+
+/**
+ * One bounded pass over the repository resolves every literal claim at once.
+ * First file in scan order wins, matching a per-claim sequential scan.
+ */
+async function firstMatches(
   root: string,
   files: readonly string[],
-  literal: string,
-): Promise<SourceMatch | null> {
+  claims: readonly ObservableClaim[],
+): Promise<Map<string, SourceMatch>> {
+  const matches = new Map<string, SourceMatch>();
+  const pending = new Map(
+    claims
+      .filter((claim) => LITERAL_SCANNED.has(claim.kind))
+      .map((claim) => [claim.id, claim.expected]),
+  );
   for (const file of files) {
+    if (pending.size === 0) break;
     let content: string;
     try {
       const stat = await lstat(file);
@@ -95,14 +116,17 @@ async function findLiteral(
     } catch {
       continue;
     }
-    const index = content.indexOf(literal);
-    if (index === -1) continue;
-    return {
-      file: relative(root, file).split(sep).join("/"),
-      line: content.slice(0, index).split("\n").length,
-    };
+    for (const [id, literal] of pending) {
+      const index = content.indexOf(literal);
+      if (index === -1) continue;
+      matches.set(id, {
+        file: relative(root, file).split(sep).join("/"),
+        line: content.slice(0, index).split("\n").length,
+      });
+      pending.delete(id);
+    }
   }
-  return null;
+  return matches;
 }
 
 /**
@@ -118,7 +142,7 @@ async function findLiteral(
 async function observeClaim(
   claim: ObservableClaim,
   options: EffectProofOptions,
-  files: readonly string[],
+  match: SourceMatch | null,
 ): Promise<EffectObservation> {
   const hint = options.hints?.find((item) => item.claim_id === claim.id);
   const base = {
@@ -128,29 +152,21 @@ async function observeClaim(
   };
 
   if (claim.kind === "EXACT_TEXT_ABSENT") {
-    const match = await findLiteral(options.root, files, claim.expected);
     return match === null
       ? { ...base, observed: null, status: "SOURCE_OBSERVED" }
       : {
           ...base,
-          observed: `${match.file}:${match.line}`,
+          observed: formatMatch(match),
           status: "SOURCE_CONTRADICTED",
         };
   }
 
-  if (
-    claim.kind === "EXACT_TEXT_PRESENT" ||
-    claim.kind === "STYLE_VALUE" ||
-    claim.kind === "NUMERIC_UI_VALUE"
-  ) {
-    const match = await findLiteral(options.root, files, claim.expected);
-    if (match !== null) {
-      return {
-        ...base,
-        observed: `${match.file}:${match.line}`,
-        status: "SOURCE_OBSERVED",
-      };
-    }
+  if (LITERAL_SCANNED.has(claim.kind) && match !== null) {
+    return {
+      ...base,
+      observed: formatMatch(match),
+      status: "SOURCE_OBSERVED",
+    };
   }
 
   // Source could not settle it. Borrow a runtime only if one already exists.
@@ -178,9 +194,10 @@ export async function proveEffects(
 ): Promise<EffectEvidence> {
   if (options.claims.length === 0) return { claims: [] };
   const files = await sourceFiles(options.root);
+  const matches = await firstMatches(options.root, files, options.claims);
   const claims: EffectObservation[] = [];
   for (const claim of options.claims) {
-    claims.push(await observeClaim(claim, options, files));
+    claims.push(await observeClaim(claim, options, matches.get(claim.id) ?? null));
   }
   return { claims };
 }

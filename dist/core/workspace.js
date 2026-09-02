@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 export const DEFAULT_MAX_WORKSPACE_BYTES = 512 * 1024 * 1024;
 const EXCLUDED = new Set([".git", ".hg", ".svn", ".receipts"]);
-async function measuredSize(path, limit) {
+async function measuredSize(path, limit, configured = limit) {
     const stat = await lstat(path);
     if (stat.isSymbolicLink())
         return stat.size;
@@ -13,9 +13,9 @@ async function measuredSize(path, limit) {
     for (const entry of await readdir(path)) {
         if (EXCLUDED.has(entry))
             continue;
-        total += await measuredSize(join(path, entry), limit - total);
+        total += await measuredSize(join(path, entry), limit - total, configured);
         if (total > limit)
-            throw new Error(`Workspace exceeds disk limit of ${limit} bytes`);
+            throw new Error(`Workspace exceeds disk limit of ${configured} bytes`);
     }
     return total;
 }

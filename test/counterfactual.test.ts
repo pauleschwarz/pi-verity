@@ -351,3 +351,26 @@ test("counterfactual timeout is INCONCLUSIVE and never PASS", async () => {
   assert.notEqual(receipt.verdict, "PASS");
   assert.notEqual(receipt.verdict, "PASS_WITH_WARNINGS");
 });
+
+test("a candidate test that also fails on baseline is INCONCLUSIVE, not CANDIDATE_FAILS", async () => {
+  const root = await repository(
+    `import test from "node:test";\nimport assert from "node:assert/strict";\ntest("pre-existing failure", () => assert.equal(1, 2));\n`,
+  );
+  const capture = await captured(root);
+  await writeFile(
+    join(root, "source.js"),
+    "export function enabled() { return true; }\n",
+  );
+  await writeFile(
+    join(root, "extra.test.js"),
+    `import test from "node:test";\nimport assert from "node:assert/strict";\ntest("still failing", () => assert.equal(2, 3));\n`,
+  );
+  const receipt = await verify(root, capture);
+  assert.equal(receipt.counterfactual?.classification, "INCONCLUSIVE");
+  assert.match(
+    receipt.counterfactual?.diagnosis ?? "",
+    /fails on both baseline and candidate/,
+  );
+  assert.notEqual(receipt.counterfactual?.baseline_result?.exit_code, 0);
+  assert.notEqual(receipt.counterfactual?.candidate_result?.exit_code, 0);
+});

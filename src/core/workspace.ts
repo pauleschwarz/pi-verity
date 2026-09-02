@@ -11,16 +11,20 @@ export interface IsolatedWorkspace {
   cleanup: () => Promise<void>;
 }
 
-async function measuredSize(path: string, limit: number): Promise<number> {
+async function measuredSize(
+  path: string,
+  limit: number,
+  configured = limit,
+): Promise<number> {
   const stat = await lstat(path);
   if (stat.isSymbolicLink()) return stat.size;
   if (!stat.isDirectory()) return stat.size;
   let total = 0;
   for (const entry of await readdir(path)) {
     if (EXCLUDED.has(entry)) continue;
-    total += await measuredSize(join(path, entry), limit - total);
+    total += await measuredSize(join(path, entry), limit - total, configured);
     if (total > limit)
-      throw new Error(`Workspace exceeds disk limit of ${limit} bytes`);
+      throw new Error(`Workspace exceeds disk limit of ${configured} bytes`);
   }
   return total;
 }

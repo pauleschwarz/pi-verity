@@ -77,6 +77,7 @@ export async function discoverVerification(root: string): Promise<DiscoveryResul
               kind: commandKind(name),
               command: [runner, ...args],
               narrowing: unverifiedNarrowing.test(script) ? "unverified" : "safe",
+              packageScript: script,
             });
           }
         }
