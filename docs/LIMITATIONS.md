@@ -114,9 +114,14 @@ untrusted repositories.
 
 ## Network isolation is platform-dependent
 
-Counterfactual network denial is enforced on macOS when the platform mechanism
-is available. Unsupported platforms report network policy as unavailable. The
-normal selected repository command is not network-isolated.
+Counterfactual network denial is enforced on macOS via `sandbox-exec`, which
+Apple has deprecated. It works today, but when a future macOS release removes
+it, counterfactual network denial degrades to the unsupported path: the run is
+reported as `INCONCLUSIVE` with `network_policy: unavailable`, never as a
+silent pass. To keep counterfactual proof working on such a system, run with
+`PI_VERITY_ALLOW_COUNTERFACTUAL_NETWORK=1` and accept that the counterfactual
+command can reach the network. Unsupported platforms report network policy as
+unavailable. The normal selected repository command is not network-isolated.
 
 ## Process cleanup has platform limits
 

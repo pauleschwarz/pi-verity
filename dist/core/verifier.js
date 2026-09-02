@@ -244,7 +244,6 @@ export async function verifyRepository(options) {
             effectEvidence,
         }),
     };
-    await options.counterfactualBaseline?.cleanup();
     return receipt;
 }
 //# sourceMappingURL=verifier.js.map

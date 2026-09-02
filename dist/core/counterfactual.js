@@ -95,8 +95,12 @@ function antiGaming(file, before, after) {
 function narrow(command, testFiles) {
     if (command.narrowing !== "safe")
         return command;
-    if (command.source === "package.json")
+    if (command.source === "package.json") {
+        // A glob in the script already selects its files; appending would run them twice.
+        if (command.packageScript?.includes("*") === true)
+            return command;
         return { ...command, command: [...command.command, "--", ...testFiles] };
+    }
     if (command.source === "pyproject.toml")
         return { ...command, command: [...command.command, ...testFiles] };
     if (command.source === "go.mod") {
@@ -137,11 +141,18 @@ function resultClassification(baseline, candidate) {
             diagnosis: "Counterfactual execution did not complete within its bounds",
         };
     }
-    if (candidate.exit_code !== 0)
+    if (candidate.exit_code !== 0) {
+        if (baseline.exit_code !== 0 && !hasStructuralBaselineFailure(baseline)) {
+            return {
+                classification: "INCONCLUSIVE",
+                diagnosis: "Candidate test fails on both baseline and candidate implementations",
+            };
+        }
         return {
             classification: "CANDIDATE_FAILS",
             diagnosis: "Candidate implementation does not pass the candidate test",
         };
+    }
     if (baseline.exit_code === 0)
         return {
             classification: "NON_DISCRIMINATING_TEST",
@@ -220,7 +231,8 @@ export async function runCounterfactual(options) {
             diagnosis: "Network isolation is unavailable on this platform",
         };
     }
-    const portable = selectedTests.filter((file) => candidateFiles.includes(file));
+    const candidateFileSet = new Set(candidateFiles);
+    const portable = selectedTests.filter((file) => candidateFileSet.has(file));
     if (portable.length === 0) {
         return {
             ...baseEvidence,
@@ -231,17 +243,18 @@ export async function runCounterfactual(options) {
     let candidateWorkspace;
     try {
         for (const file of portable) {
-            const source = join(options.root, file);
-            const destination = join(options.baseline.directory, file);
-            const sourceStat = await lstat(source);
+            const sourceStat = await lstat(join(options.root, file));
             if (!sourceStat.isFile())
                 return {
                     ...baseEvidence,
                     classification: "TEST_NOT_PORTABLE",
                     diagnosis: `Test is not a regular file: ${file}`,
                 };
+        }
+        for (const file of portable) {
+            const destination = join(options.baseline.directory, file);
             await mkdir(dirname(destination), { recursive: true });
-            await cp(source, destination);
+            await cp(join(options.root, file), destination);
         }
         candidateWorkspace = await createIsolatedWorkspace(options.root, options.maxWorkspaceBytes, "pi-verity-candidate-");
         const command = narrow(options.command, portable);
