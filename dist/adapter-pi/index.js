@@ -1,6 +1,7 @@
 import { readdir, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { VERDICT_LABEL, VERDICT_MARK } from "../core/display.js";
 import { formatDoctorReport, runDoctor } from "../core/doctor.js";
 import { EMPTY_EFFECT_EVIDENCE, proveEffects } from "../core/effect-proof.js";
 import { EXECUTION_POLICY_ENV, fingerprintExecutionRequest, formatExecutionPolicyEvent, lockExecutionInput, parseExecutionPolicy, requiresExecutionApproval, summarizeExecutionRequest, } from "../core/execution-policy.js";
@@ -25,13 +26,13 @@ const VERITY_STATE_PRIORITY = {
 const VERITY_STATE_LABEL = {
     BLOCKED: "blocked",
     FAILED: "failed",
-    APPROVAL_REQUIRED: "approval required",
-    VERIFYING: "verifying",
-    UNPROVEN: "unproven",
-    WARNING: "warning",
+    APPROVAL_REQUIRED: "needs approval",
+    VERIFYING: "checking",
+    UNPROVEN: "not proven",
+    WARNING: "notes",
     PROVEN: "proven",
-    CHANGE_PENDING: "change pending",
-    OBSERVING: "observing",
+    CHANGE_PENDING: "code changed",
+    OBSERVING: "watching",
 };
 const VERITY_STATE_COLOR = {
     BLOCKED: "error",
@@ -154,26 +155,27 @@ function summaryDiagnostics(receipt) {
 }
 export function formatReceiptSummary(receipt, diff) {
     const facts = formatDiffFacts(receipt, diff);
+    const label = VERDICT_LABEL[receipt.verdict];
+    const marker = VERDICT_MARK[receipt.verdict];
     if (receipt.verdict === "PASS") {
-        return `verity ✓ PASS · ${facts}`;
+        return `verity ${marker} ${label} · ${facts}`;
     }
     if (receipt.verdict === "PASS_WITH_WARNINGS") {
         const details = summaryDiagnostics(receipt);
         const suffix = details.length === 0 ? "" : `\n${details.join("\n")}`;
-        return `verity ⚠ PASS_WITH_WARNINGS · ${facts}${suffix}`;
+        return `verity ${marker} ${label} · ${facts}${suffix}`;
     }
-    const marker = receipt.verdict === "FAIL" ? "✗" : "⚠";
     const primary = diff?.primaryPath ??
         receipt.changed_files.slice().sort((a, b) => a.localeCompare(b))[0];
     const head = primary === undefined
-        ? `verity ${marker} ${receipt.verdict} · ${facts}`
-        : `verity ${marker} ${receipt.verdict} · ${primary}`;
+        ? `verity ${marker} ${label} · ${facts}`
+        : `verity ${marker} ${label} · ${primary}`;
     const details = summaryDiagnostics(receipt);
     const body = details.length === 0 ? "" : `\n${details.join("\n")}`;
     return `${head}${body}\n/verity why`;
 }
 export function explainReceipt(receipt) {
-    const lines = [`verity ${receipt.verdict}`];
+    const lines = [`verity ${VERDICT_LABEL[receipt.verdict]}`];
     if (receipt.verification_commands.length === 0) {
         lines.push("check · unavailable · no supported safe verification command was selected");
     }
@@ -864,8 +866,8 @@ class PiVerityRuntime {
     notifyWhy(context, stale) {
         const policyLine = this.policyWhyLine();
         if (this.lastReceipt === undefined) {
-            this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.(["verity: no current receipt · run /verity run", policyLine]
+            this.updateStatus(context, { kind: "UNPROVEN", detail: "no receipt yet" }, true);
+            context.ui?.notify?.(["verity: no receipt yet · run /verity run", policyLine]
                 .filter((line) => line !== undefined)
                 .join("\n"), "warning");
             return;
@@ -873,28 +875,30 @@ class PiVerityRuntime {
         if (stale) {
             this.updateStatus(context, { kind: "UNPROVEN", detail: "repository changed" }, true);
         }
-        const prefix = stale ? "STALE · repository changed after this receipt\n" : "";
+        const prefix = stale
+            ? "Out of date · the repository changed after this receipt\n"
+            : "";
         const suffix = policyLine === undefined ? "" : `\n${policyLine}`;
         const level = stale ? "warning" : receiptLevel(this.lastReceipt.verdict);
         context.ui?.notify?.(`${prefix}${explainReceipt(this.lastReceipt)}${suffix}`, level);
     }
     notifyReceipt(context) {
         if (this.lastReceipt === undefined || this.lastReceiptPath === undefined) {
-            this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
+            this.updateStatus(context, { kind: "UNPROVEN", detail: "no receipt yet" }, true);
+            context.ui?.notify?.("verity: no receipt yet · run /verity run", "warning");
             return;
         }
         context.ui?.notify?.(`verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`, "info");
     }
     notifyCurrent(context, stale) {
         if (this.lastReceipt === undefined) {
-            this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
+            this.updateStatus(context, { kind: "UNPROVEN", detail: "no receipt yet" }, true);
+            context.ui?.notify?.("verity: no receipt yet · run /verity run", "warning");
             return;
         }
         if (stale) {
-            this.updateStatus(context, { kind: "CHANGE_PENDING", detail: "repository changed" }, true);
-            context.ui?.notify?.("verity ⚠ STALE · repository changed · /verity run", "warning");
+            this.updateStatus(context, { kind: "CHANGE_PENDING", detail: "code changed" }, true);
+            context.ui?.notify?.("verity ⚠ Out of date · the code changed · /verity run", "warning");
             return;
         }
         this.updateStatus(context, receiptUiState(this.lastReceipt), true);
@@ -908,7 +912,7 @@ class PiVerityRuntime {
         }
         if (subcommand === "invalid") {
             this.updateStatus(context, { kind: "WARNING", detail: "invalid command" }, true);
-            context.ui?.notify?.("Usage: /verity [run|why|receipt|doctor|policy]", "warning");
+            context.ui?.notify?.("Usage: /verity [run|why|receipt|doctor|policy]\nrun proves the current tree; why explains the last receipt", "warning");
             return;
         }
         if (subcommand === "policy") {
@@ -921,7 +925,7 @@ class PiVerityRuntime {
         if (subcommand === "doctor") {
             try {
                 const report = await runDoctor(context.cwd ?? process.cwd());
-                context.ui?.notify?.(`${formatDoctorReport(report)}\n✓ Pi adapter loaded\n${repairStatus()}\n${this.formatPolicyDoctor()}`, report.ready && this.executionPolicy.valid ? "info" : "error");
+                context.ui?.notify?.(`${formatDoctorReport(report)}\n✓ Pi adapter loaded · /verity run after a change\n${repairStatus()}\n${this.formatPolicyDoctor()}`, report.ready && this.executionPolicy.valid ? "info" : "error");
             }
             catch (error) {
                 context.ui?.notify?.(`verity doctor failed: ${error instanceof Error ? error.message : String(error)}`, "error");

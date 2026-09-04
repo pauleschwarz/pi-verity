@@ -799,17 +799,17 @@ test("status initializes, tracks mutations, and clears only on shutdown", async 
   try {
     await fake.events.get("session_start")?.({}, context);
     assert.equal(fake.statuses.at(-1)?.key, "pi-verity");
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · watching$/);
 
     await fake.events.get("tool_call")?.({ toolName: "read" }, context);
     await fake.events.get("agent_settled")?.({}, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · watching$/);
     assert.equal(fake.entries.length, 0);
     assert.equal(fake.notices.length, 0);
 
     await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
     await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · change pending · edit$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · code changed · edit$/);
 
     await fake.events.get("agent_settled")?.({}, context);
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
@@ -845,12 +845,12 @@ test("approval required is visible before confirm and recovers after allow or de
     assert.equal(allowResult, undefined);
     assert.ok(
       allowFake.statuses.some((status) =>
-        /^verity · approval required · bash$/.test(status.value ?? ""),
+        /^verity · needs approval · bash$/.test(status.value ?? ""),
       ),
     );
     assert.match(
       allowFake.statuses.at(-1)?.value ?? "",
-      /^verity · change pending · bash$/,
+      /^verity · code changed · bash$/,
     );
 
     const denyFake = fakePi([false]);
@@ -868,7 +868,7 @@ test("approval required is visible before confirm and recovers after allow or de
     assert.equal(denyResult?.block, true);
     assert.ok(
       denyFake.statuses.some((status) =>
-        /^verity · approval required · bash$/.test(status.value ?? ""),
+        /^verity · needs approval · bash$/.test(status.value ?? ""),
       ),
     );
     assert.match(denyFake.statuses.at(-1)?.value ?? "", /^verity · blocked · bash$/);
@@ -886,29 +886,29 @@ test("explicit commands update status for missing receipt, invalid usage, and po
       await fake.commands.get("verity")?.("", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^verity · unproven · no current receipt$/,
+        /^verity · not proven · no receipt yet$/,
       );
 
       await fake.commands.get("verity")?.("why", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^verity · unproven · no current receipt$/,
+        /^verity · not proven · no receipt yet$/,
       );
 
       await fake.commands.get("verity")?.("receipt", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^verity · unproven · no current receipt$/,
+        /^verity · not proven · no receipt yet$/,
       );
 
       await fake.commands.get("verity")?.("wat", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^verity · warning · invalid command$/,
+        /^verity · notes · invalid command$/,
       );
 
       await fake.commands.get("verity")?.("policy", context);
-      assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing · policy$/);
+      assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · watching · policy$/);
     } finally {
       await fake.events.get("session_shutdown")?.({}, context);
       await rm(root, { recursive: true, force: true });
@@ -971,7 +971,7 @@ test("outside a git repository verity stays silent", async () => {
     assert.equal(fake.entries.length, 0);
     assert.equal(fake.messages.length, 0);
     assert.equal(fake.notices.length, 0);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · watching$/);
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);
     await rm(root, { recursive: true, force: true });

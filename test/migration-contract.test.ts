@@ -50,8 +50,15 @@ test("CLI help is simple and host-neutral", () => {
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /^Usage:\n {2}verity verify/m);
+  assert.match(
+    result.stdout,
+    /Verity checks whether repository evidence supports claiming the work is done/,
+  );
+  assert.match(result.stdout, /Usage:\n {2}verity doctor/m);
+  assert.match(result.stdout, /verity verify/);
   assert.match(result.stdout, /--visual-qa-report/);
+  assert.match(result.stdout, /Proven, with notes/);
+  assert.match(result.stdout, /Not proven/);
   assert.match(result.stdout, /Legacy alias: pi-verity/);
   assert.equal(result.stderr, "");
 });

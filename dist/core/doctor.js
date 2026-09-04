@@ -59,10 +59,10 @@ async function workspaceSupported() {
     let parent;
     try {
         parent = await mkdtemp(join(tmpdir(), "verity-doctor-"));
-        return check("OK", "isolated counterfactual workspace supported");
+        return check("OK", "can copy the repo for a before/after test");
     }
     catch (error) {
-        return check("ERROR", "isolated counterfactual workspace unavailable", error instanceof Error ? error.message : String(error));
+        return check("ERROR", "cannot copy the repo for a before/after test", error instanceof Error ? error.message : String(error));
     }
     finally {
         if (parent !== undefined)
@@ -77,34 +77,34 @@ async function workspaceSupported() {
  */
 export async function runDoctor(cwd) {
     const checks = [
-        check("OK", "verification core available", `Verity ${VERSION}`),
+        check("OK", "proof engine ready", `Verity ${VERSION}`),
     ];
     let root = null;
     try {
         root = await findRepositoryRoot(cwd);
-        checks.push(check("OK", "git repository", root));
-        checks.push(check("OK", "baseline capture available"));
+        checks.push(check("OK", "Git repository found", root));
+        checks.push(check("OK", "can snapshot the working tree"));
     }
     catch (error) {
         if (!(error instanceof NotGitRepositoryError))
             throw error;
         checks.push(check("ERROR", "not inside a Git repository", cwd));
-        checks.push(check("ERROR", "baseline capture unavailable", "requires a Git repository"));
+        checks.push(check("ERROR", "cannot snapshot the working tree", "open a Git repository, then run doctor again"));
     }
     if (root !== null) {
         const manager = await packageManager(root);
         checks.push(manager === null
-            ? check("WARN", "no Node package manager discovered", "no package.json or lockfile at the repository root")
+            ? check("WARN", "no Node package manager found", "no package.json or lockfile at the repository root")
             : check("OK", `package manager: ${manager}`));
         const discovery = await discoverVerification(root);
         const scripts = await packageScripts(root, manager);
         const test = discovery.commands.find((command) => command.kind === "test");
         checks.push(test === undefined
-            ? check("ERROR", "no test command discovered", "counterfactual proof requires a repository-defined test command")
+            ? check("ERROR", "no test command found", "add a repository test script so Verity can prove a change actually matters")
             : check("OK", `test command: ${test.command.join(" ")}`));
         const typecheckName = ["typecheck", "check"].find((name) => typeof scripts[name] === "string");
         checks.push(typecheckName === undefined
-            ? check("WARN", "no typecheck command discovered", "verification will not include a type-level check")
+            ? check("WARN", "no typecheck command found", "Verity will skip a type-level check")
             : check("OK", `typecheck: ${scriptCommand(manager ?? "npm", typecheckName)}`));
         for (const warning of discovery.warnings) {
             checks.push(check("WARN", "discovery warning", warning));
@@ -120,17 +120,23 @@ export async function runDoctor(cwd) {
 }
 const MARKER = {
     OK: "✓",
-    WARN: "WARN",
-    ERROR: "ERROR",
+    WARN: "⚠",
+    ERROR: "✗",
 };
 export function formatDoctorReport(report) {
-    const lines = [`Verity ${report.version}`, ""];
+    const lines = [
+        `Verity ${report.version}`,
+        "Checks whether this repository can produce a proof receipt.",
+        "",
+    ];
     for (const item of report.checks) {
         const detail = item.detail === null || item.status === "OK" ? "" : ` · ${item.detail}`;
         lines.push(`${MARKER[item.status]} ${item.label}${detail}`);
     }
     lines.push("");
-    lines.push(report.ready ? "Ready." : "Not ready. Resolve the ERROR items above.");
+    lines.push(report.ready
+        ? "Ready. Run `verity verify` after the agent finishes."
+        : "Not ready. Fix the ✗ items above, then run `verity doctor` again.");
     return lines.join("\n");
 }
 //# sourceMappingURL=doctor.js.map

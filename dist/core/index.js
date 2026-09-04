@@ -1,5 +1,6 @@
 export * from "./counterfactual.js";
 export * from "./discovery.js";
+export * from "./display.js";
 export * from "./doctor.js";
 export * from "./effect-proof.js";
 export * from "./execution-policy.js";
