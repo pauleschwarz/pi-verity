@@ -85,11 +85,11 @@ async function workspaceSupported(): Promise<DoctorCheck> {
   let parent: string | undefined;
   try {
     parent = await mkdtemp(join(tmpdir(), "verity-doctor-"));
-    return check("OK", "isolated counterfactual workspace supported");
+    return check("OK", "can copy the repo for a before/after test");
   } catch (error) {
     return check(
       "ERROR",
-      "isolated counterfactual workspace unavailable",
+      "cannot copy the repo for a before/after test",
       error instanceof Error ? error.message : String(error),
     );
   } finally {
@@ -105,19 +105,23 @@ async function workspaceSupported(): Promise<DoctorCheck> {
  */
 export async function runDoctor(cwd: string): Promise<DoctorReport> {
   const checks: DoctorCheck[] = [
-    check("OK", "verification core available", `Verity ${VERSION}`),
+    check("OK", "proof engine ready", `Verity ${VERSION}`),
   ];
 
   let root: string | null = null;
   try {
     root = await findRepositoryRoot(cwd);
-    checks.push(check("OK", "git repository", root));
-    checks.push(check("OK", "baseline capture available"));
+    checks.push(check("OK", "Git repository found", root));
+    checks.push(check("OK", "can snapshot the working tree"));
   } catch (error) {
     if (!(error instanceof NotGitRepositoryError)) throw error;
     checks.push(check("ERROR", "not inside a Git repository", cwd));
     checks.push(
-      check("ERROR", "baseline capture unavailable", "requires a Git repository"),
+      check(
+        "ERROR",
+        "cannot snapshot the working tree",
+        "open a Git repository, then run doctor again",
+      ),
     );
   }
 
@@ -127,7 +131,7 @@ export async function runDoctor(cwd: string): Promise<DoctorReport> {
       manager === null
         ? check(
             "WARN",
-            "no Node package manager discovered",
+            "no Node package manager found",
             "no package.json or lockfile at the repository root",
           )
         : check("OK", `package manager: ${manager}`),
@@ -140,8 +144,8 @@ export async function runDoctor(cwd: string): Promise<DoctorReport> {
       test === undefined
         ? check(
             "ERROR",
-            "no test command discovered",
-            "counterfactual proof requires a repository-defined test command",
+            "no test command found",
+            "add a repository test script so Verity can prove a change actually matters",
           )
         : check("OK", `test command: ${test.command.join(" ")}`),
     );
@@ -153,8 +157,8 @@ export async function runDoctor(cwd: string): Promise<DoctorReport> {
       typecheckName === undefined
         ? check(
             "WARN",
-            "no typecheck command discovered",
-            "verification will not include a type-level check",
+            "no typecheck command found",
+            "Verity will skip a type-level check",
           )
         : check("OK", `typecheck: ${scriptCommand(manager ?? "npm", typecheckName)}`),
     );
@@ -176,18 +180,26 @@ export async function runDoctor(cwd: string): Promise<DoctorReport> {
 
 const MARKER: Record<DoctorStatus, string> = {
   OK: "✓",
-  WARN: "WARN",
-  ERROR: "ERROR",
+  WARN: "⚠",
+  ERROR: "✗",
 };
 
 export function formatDoctorReport(report: DoctorReport): string {
-  const lines = [`Verity ${report.version}`, ""];
+  const lines = [
+    `Verity ${report.version}`,
+    "Checks whether this repository can produce a proof receipt.",
+    "",
+  ];
   for (const item of report.checks) {
     const detail =
       item.detail === null || item.status === "OK" ? "" : ` · ${item.detail}`;
     lines.push(`${MARKER[item.status]} ${item.label}${detail}`);
   }
   lines.push("");
-  lines.push(report.ready ? "Ready." : "Not ready. Resolve the ERROR items above.");
+  lines.push(
+    report.ready
+      ? "Ready. Run `verity verify` after the agent finishes."
+      : "Not ready. Fix the ✗ items above, then run `verity doctor` again.",
+  );
   return lines.join("\n");
 }

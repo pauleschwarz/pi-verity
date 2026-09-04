@@ -87,12 +87,12 @@ If the exact baseline workspace was not captured, it says
 
 ## Verdicts
 
-| Verdict | Meaning |
-| --- | --- |
-| `PASS` | Every required deterministic dimension selected for this patch passed |
-| `PASS_WITH_WARNINGS` | Required checks passed; explicit non-blocking facts remain |
-| `UNPROVEN` | Evidence is missing, inconclusive, stale, or non-discriminating |
-| `FAIL` | A selected check or blocking integrity signal failed |
+| What you see | Machine verdict | Meaning |
+| --- | --- | --- |
+| Proven | `PASS` | Required checks for this patch passed |
+| Proven, with notes | `PASS_WITH_WARNINGS` | Passed, but something still needs attention |
+| Not proven | `UNPROVEN` | Evidence missing, inconclusive, or out of date — do not claim done |
+| Failed | `FAIL` | A required check or blocking integrity signal failed |
 
 A receipt records commands, bounded output, changed files, counterfactual
 classification, scope integrity, test delta, observable effects, optional

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { formatVerdictLine } from "./core/display.js";
 import { formatDoctorReport, runDoctor } from "./core/doctor.js";
 import { canonicalJson } from "./core/hash.js";
 import type { VerifyOptions } from "./core/types.js";
@@ -8,11 +9,20 @@ import { verifyRepository } from "./core/verifier.js";
 
 function usage(error?: string): never {
   const text =
+    "Verity checks whether repository evidence supports claiming the work is done.\n\n" +
     "Usage:\n" +
+    "  verity doctor [repository]\n" +
     "  verity verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N]\n" +
     "               [--visual-qa-report report.json] [--visual-qa-subject-bound]\n" +
-    "  verity doctor [repository]\n" +
     "  verity --version\n\n" +
+    "verify writes a JSON receipt. Without --output, JSON goes to stdout.\n" +
+    "The human verdict line goes to stderr.\n\n" +
+    "Verdicts:\n" +
+    "  Proven                 required checks passed\n" +
+    "  Proven, with notes     passed, but something needs attention\n" +
+    "  Not proven             evidence missing or inconclusive; do not claim done\n" +
+    "  Failed                 a required check failed\n\n" +
+    "Exit: 0 proven / 1 failed / 2 not proven or bad usage\n" +
     "Legacy alias: pi-verity\n";
   if (error === undefined) {
     process.stdout.write(text);
@@ -92,7 +102,7 @@ else
     encoding: "utf8",
     mode: 0o600,
   });
-process.stderr.write(`verity: ${receipt.verdict}\n`);
+process.stderr.write(`${formatVerdictLine(receipt.verdict)}\n`);
 if (receipt.verdict === "PASS" || receipt.verdict === "PASS_WITH_WARNINGS")
   process.exitCode = 0;
 else if (receipt.verdict === "FAIL") process.exitCode = 1;
