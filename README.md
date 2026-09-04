@@ -95,10 +95,10 @@ If the exact baseline workspace was not captured, it says
 | `FAIL` | A selected check or blocking integrity signal failed |
 
 A receipt records commands, bounded output, changed files, counterfactual
-classification, scope integrity, test delta, observable effects, and the final
-state hash. Current receipts use the frozen
-[`proof-receipt.v4`](schemas/proof-receipt.v4.schema.json) contract; v3 remains
-available for existing consumers.
+classification, scope integrity, test delta, observable effects, optional
+external evidence, and the final state hash. Current receipts use
+[`proof-receipt.v5`](schemas/proof-receipt.v5.schema.json); v3 and v4 remain
+frozen for existing consumers.
 
 ## How it works
 
@@ -202,8 +202,8 @@ Precise boundaries: [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 | CLI/core usable by any harness | Existing Pi auto-load metadata |
 
 The npm package name, GitHub repository URL, receipt v3/v4 URNs, saved receipt
-paths, Pi status keys, and session entry IDs remain unchanged in this minor
-migration. They are machine contracts, not current product branding.
+paths, Pi status keys, and session entry IDs remain unchanged. Current receipts
+write schema v5 with optional `external_evidence`; v3 and v4 stay readable.
 
 ## Docs
 

@@ -207,17 +207,19 @@ on Pi APIs, but no other host adapter is shipped.
 
 ## Receipt schema
 
-The current machine-readable receipt is schema version 4:
+The current machine-readable receipt is schema version 5:
 
-[`schemas/proof-receipt.v4.schema.json`](../schemas/proof-receipt.v4.schema.json)
+[`schemas/proof-receipt.v5.schema.json`](../schemas/proof-receipt.v5.schema.json)
 
-Schema version 3, as shipped by v0.1.5 and earlier, remains available unchanged
-at [`schemas/proof-receipt.v3.schema.json`](../schemas/proof-receipt.v3.schema.json).
+Schema versions 3 and 4 remain available unchanged at
+[`schemas/proof-receipt.v3.schema.json`](../schemas/proof-receipt.v3.schema.json)
+and [`schemas/proof-receipt.v4.schema.json`](../schemas/proof-receipt.v4.schema.json).
 
-A v4 receipt records repository identity, command results, counterfactual
+A v5 receipt records repository identity, command results, counterfactual
 evidence (with command narrowing safety), scope signals, mechanical
-`test_delta`, bounded `effect_evidence`, warnings, unresolved dimensions, and
-the verdict. Receipts are local, unsigned evidence, not remote attestation.
+`test_delta`, bounded `effect_evidence`, optional `external_evidence`,
+warnings, unresolved dimensions, and the verdict. Receipts are local, unsigned
+evidence, not remote attestation.
 
 ### New in schema version 4
 

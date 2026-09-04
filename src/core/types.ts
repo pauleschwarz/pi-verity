@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4 as const;
+export const SCHEMA_VERSION = 5 as const;
 
 export type Verdict = "PASS" | "PASS_WITH_WARNINGS" | "FAIL" | "UNPROVEN";
 export type ScopeSeverity = "FAIL" | "WARNING" | "INFORMATION";
@@ -170,6 +170,32 @@ export interface CounterfactualEvidence {
   diagnosis: string;
 }
 
+/**
+ * Evidence produced outside the repository (for example a browser QA run).
+ *
+ * A browser can observe a deployed or stale build that does not correspond to
+ * the checked source tree, so a passing external run is never treated as proof
+ * on its own. `subject_bound` records whether the external subject was proven
+ * to be the candidate; when it is false, PASS is downgraded to a warning.
+ */
+export type ExternalEvidenceStatus =
+  | "PASS"
+  | "FAIL"
+  | "INCOMPLETE"
+  | "UNAVAILABLE"
+  | "MALFORMED";
+
+export interface ExternalEvidence {
+  provider: string;
+  status: ExternalEvidenceStatus;
+  subject_bound: boolean;
+  run_id: string | null;
+  report_hash: string | null;
+  report_path: string | null;
+  issue_count: number | null;
+  detail: string;
+}
+
 export interface ProofReceipt {
   schema_version: typeof SCHEMA_VERSION;
   task_id: string | null;
@@ -185,6 +211,7 @@ export interface ProofReceipt {
   scope_integrity: ScopeIntegrityEvidence;
   test_delta: TestDelta;
   effect_evidence: EffectEvidence;
+  external_evidence: ExternalEvidence[];
   warnings: string[];
   unverified_dimensions: string[];
   verdict: Verdict;
@@ -202,6 +229,7 @@ export interface VerifyOptions {
   observableClaims?: readonly ObservableClaim[];
   probeHints?: readonly ProbeHint[];
   allowCounterfactualNetwork?: boolean;
+  externalEvidence?: readonly ExternalEvidence[];
   signal?: AbortSignal;
   now?: () => Date;
 }

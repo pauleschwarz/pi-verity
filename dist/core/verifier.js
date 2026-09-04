@@ -23,10 +23,12 @@ async function analyzeRepositoryScope(root, files, baseline, baselineDirectory) 
     return analyzeScopeIntegrity(scopeOptions);
 }
 function decideVerdict(evidence) {
-    const { changed, baselineDirty, commands, counterfactual, scopeIntegrity, warnings, unverified, effectEvidence, } = evidence;
+    const { changed, baselineDirty, commands, counterfactual, scopeIntegrity, warnings, unverified, effectEvidence, externalEvidence, } = evidence;
     if (commands.some((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled))
         return "FAIL";
     if (counterfactual?.classification === "CANDIDATE_FAILS")
+        return "FAIL";
+    if (externalEvidence.some((item) => item.status === "FAIL"))
         return "FAIL";
     if (scopeIntegrity.signals.some((item) => item.severity === "FAIL"))
         return "FAIL";
@@ -93,10 +95,25 @@ function emptyReceipt(options, createdAt, error) {
         },
         test_delta: { ...EMPTY_TEST_DELTA },
         effect_evidence: { ...EMPTY_EFFECT_EVIDENCE },
+        external_evidence: [],
         warnings: [error.message],
         unverified_dimensions: ["repository state", "automated verification"],
         verdict: "UNPROVEN",
     };
+}
+function applyExternalEvidence(items, warnings, unverified) {
+    const evidence = [...items];
+    for (const item of evidence) {
+        if (item.status === "INCOMPLETE" ||
+            item.status === "UNAVAILABLE" ||
+            item.status === "MALFORMED") {
+            unverified.push(`External evidence (${item.provider}): ${item.status}`);
+        }
+        else if (item.status === "PASS" && !item.subject_bound) {
+            warnings.push(`External evidence (${item.provider}) passed without a bound subject; browser may have tested a different build`);
+        }
+    }
+    return evidence;
 }
 export async function verifyRepository(options) {
     const createdAt = (options.now ?? (() => new Date()))().toISOString();
@@ -215,6 +232,7 @@ export async function verifyRepository(options) {
         warnings.push(`${unchecked.length} observable claim(s) unchecked`);
     if (contradicted.length > 0)
         unverified.push("Observable effect claim contradicted");
+    const externalEvidence = applyExternalEvidence(options.externalEvidence ?? [], warnings, unverified);
     const receipt = {
         schema_version: SCHEMA_VERSION,
         task_id: options.taskId ?? null,
@@ -230,6 +248,7 @@ export async function verifyRepository(options) {
         scope_integrity: scopeIntegrity,
         test_delta: testDelta,
         effect_evidence: effectEvidence,
+        external_evidence: externalEvidence,
         warnings,
         unverified_dimensions: unverified,
         verdict: decideVerdict({
@@ -242,6 +261,7 @@ export async function verifyRepository(options) {
             warnings,
             unverified,
             effectEvidence,
+            externalEvidence,
         }),
     };
     return receipt;

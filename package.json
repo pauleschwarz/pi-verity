@@ -52,7 +52,7 @@
     "prepare": "node scripts/prepare.mjs",
     "prepublishOnly": "npm run verify",
     "test": "node --import tsx --test test/*.test.ts",
-    "test:unit": "node --import tsx --test test/adapter-pi.test.ts test/execution-policy.test.ts test/scope-integrity.test.ts test/observable-claims.test.ts test/test-delta.test.ts test/turn-contract.test.ts test/schema.test.ts",
+    "test:unit": "node --import tsx --test test/adapter-pi.test.ts test/execution-policy.test.ts test/scope-integrity.test.ts test/observable-claims.test.ts test/test-delta.test.ts test/turn-contract.test.ts test/schema.test.ts test/evidence-provider.test.ts test/migration-contract.test.ts",
     "test:integration": "node --import tsx --test test/adapter-pi.lifecycle.test.ts test/counterfactual.test.ts test/verifier.test.ts test/effect-proof.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run check:dist"
