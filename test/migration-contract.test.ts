@@ -51,6 +51,7 @@ test("CLI help is simple and host-neutral", () => {
   );
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /^Usage:\n {2}verity verify/m);
+  assert.match(result.stdout, /--visual-qa-report/);
   assert.match(result.stdout, /Legacy alias: pi-verity/);
   assert.equal(result.stderr, "");
 });

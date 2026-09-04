@@ -1,2 +1,2 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 //# sourceMappingURL=types.js.map

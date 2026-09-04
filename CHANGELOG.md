@@ -6,6 +6,11 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Added
 
+- ProofReceipt schema version 5 with optional bounded `external_evidence`.
+  Schema versions 3 and 4 stay frozen and readable.
+- Optional visual-qa evidence ingest via `--visual-qa-report` (fail-closed:
+  FAIL blocks, missing/malformed/incomplete is `UNPROVEN`, unbound PASS is a
+  warning). Core has no Playwright dependency.
 - Canonical `verity` binary alongside the legacy `pi-verity` alias.
 - Canonical Pi adapter export path `@pauleschwarz/pi-verity/adapters/pi`; the
   legacy `./adapter-pi` export stays valid.
@@ -27,9 +32,9 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ### Compatibility
 
-- Unchanged: npm package name, repository URL, receipt schemas v3/v4 and URNs,
+- Unchanged: npm package name, repository URL, receipt schema v3/v4 URNs,
   saved receipt paths, `pi-verity*` Pi status/session identifiers, and the
-  `PI_VERITY_*` environment variables.
+  `PI_VERITY_*` environment variables. Current receipts write schema v5.
 
 ## [0.2.0] - 2026-08-31
 
