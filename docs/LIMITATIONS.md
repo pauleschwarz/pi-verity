@@ -1,6 +1,6 @@
 # Limitations
 
-Pi Verity deliberately avoids claims it cannot justify.
+Verity deliberately avoids claims it cannot justify.
 
 ## Execution policy is Pi-bound
 
@@ -57,7 +57,7 @@ Baseline RED and candidate GREEN shows that a candidate test distinguishes old
 and new behavior. It does not prove the requirement is correct, the test is
 complete, or unrelated behavior did not regress.
 
-Counterfactual applicability is also conservative. Pi Verity recognizes common
+Counterfactual applicability is also conservative. Verity recognizes common
 missing-module, import, export, and symbol diagnostics as structural
 `TEST_NOT_PORTABLE` failures. Toolchains can phrase those failures differently,
 so an unfamiliar diagnostic may remain `INCONCLUSIVE` or may require manual
