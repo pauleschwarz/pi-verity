@@ -25,7 +25,12 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 - The visible product is **Verity**; user-facing CLI, doctor, and Pi UI text no
   longer says "pi-verity".
-- Doctor reports `verification core available` instead of `extension loaded`;
+- Human-facing verdict labels: Proven / Proven, with notes / Not proven /
+  Failed. Machine receipt JSON still uses PASS / PASS_WITH_WARNINGS / UNPROVEN
+  / FAIL.
+- Doctor and Pi footer use plain-language status text (watching, checking,
+  notes, not proven) instead of internal jargon.
+- Doctor reports `proof engine ready` instead of `extension loaded`;
   `/verity doctor` additionally reports the loaded Pi adapter.
 - README and docs lead with the harness-neutral CLI, with Pi as an optional
   adapter.

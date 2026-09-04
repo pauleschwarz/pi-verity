@@ -24,9 +24,10 @@ test("doctor reports a ready Git repository without network or LLM dependencies"
   );
   const formatted = formatDoctorReport(report);
   assert.match(formatted, /^Verity 0\.2\.0/m);
-  assert.match(formatted, /✓ verification core available/);
+  assert.match(formatted, /✓ proof engine ready/);
   assert.doesNotMatch(formatted, /extension loaded/);
-  assert.match(formatted, /ERROR not inside a Git repository/);
+  assert.match(formatted, /✗ not inside a Git repository/);
+  assert.match(formatted, /Not ready\. Fix the ✗ items above/);
 });
 
 test("doctor warns when typecheck is unavailable", async () => {
@@ -42,7 +43,8 @@ test("doctor warns when typecheck is unavailable", async () => {
     report.checks.find((item) => item.label.startsWith("no typecheck"))?.status,
     "WARN",
   );
-  assert.match(formatDoctorReport(report), /WARN no typecheck command discovered/);
+  assert.match(formatDoctorReport(report), /⚠ no typecheck command found/);
+  assert.match(formatDoctorReport(report), /Ready\. Run `verity verify`/);
 });
 
 test("doctor reports a configured typecheck command", async () => {
