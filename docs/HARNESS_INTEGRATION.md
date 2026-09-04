@@ -81,10 +81,26 @@ it when the host exposes a trustworthy hook before tool execution.
 
 ## Browser evidence
 
-A browser can test a deployed or stale build that does not correspond to the
-checked source tree. Therefore an arbitrary visual-qa PASS must not silently
-upgrade a Verity verdict. The first integration is deliberately conservative:
-FAIL blocks, incomplete/blocked is unproven, and PASS remains qualified until
-the browser subject is bound to the candidate.
+visual-qa stays optional and standalone. Verity never launches a browser and
+has no Playwright dependency. Pass a completed `report.json`:
+
+```bash
+visual-qa run --url http://127.0.0.1:3000 --out .qa
+verity verify . --output .verity/receipt.json --visual-qa-report .qa/report.json
+```
+
+Fail-closed mapping:
+
+| visual-qa result | Verity effect |
+| --- | --- |
+| `FAIL` | receipt `FAIL` |
+| missing binary/report, malformed JSON, timeout, incomplete coverage | `UNPROVEN` |
+| `PASS` without `--visual-qa-subject-bound` | recorded, verdict at most `PASS_WITH_WARNINGS` |
+| `PASS` with `--visual-qa-subject-bound` | recorded as bound evidence; still cannot invent repository proof |
+
+`--visual-qa-subject-bound` is a caller assertion that the browser subject was
+the candidate under verification. Do not set it for a deployed, cached, or
+otherwise unbound app. Browser artifacts stay in the visual-qa output
+directory; the receipt stores only a bounded summary plus `report_hash`.
 
 See the [migration plan](plans/2026-09-03-verity-harness-neutral.md).
