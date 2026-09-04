@@ -7,6 +7,7 @@ import { verifyRepository } from "./core/verifier.js";
 function usage(error) {
     const text = "Usage:\n" +
         "  verity verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N]\n" +
+        "               [--visual-qa-report report.json] [--visual-qa-subject-bound]\n" +
         "  verity doctor [repository]\n" +
         "  verity --version\n\n" +
         "Legacy alias: pi-verity\n";
@@ -41,6 +42,8 @@ let cwd = process.cwd();
 let output;
 let timeoutMs;
 let maxOutputBytes;
+let visualQaReport;
+let visualQaSubjectBound = false;
 while (args.length > 0) {
     const arg = args.shift();
     if (arg === undefined)
@@ -51,6 +54,10 @@ while (args.length > 0) {
         timeoutMs = Number(args.shift() ?? usage());
     else if (arg === "--max-output-bytes")
         maxOutputBytes = Number(args.shift() ?? usage());
+    else if (arg === "--visual-qa-report")
+        visualQaReport = args.shift() ?? usage();
+    else if (arg === "--visual-qa-subject-bound")
+        visualQaSubjectBound = true;
     else if (arg.startsWith("-"))
         usage();
     else
@@ -68,6 +75,17 @@ if (timeoutMs !== undefined)
     options.timeoutMs = timeoutMs;
 if (maxOutputBytes !== undefined)
     options.maxOutputBytes = maxOutputBytes;
+if (visualQaSubjectBound && visualQaReport === undefined)
+    usage("--visual-qa-subject-bound requires --visual-qa-report");
+if (visualQaReport !== undefined) {
+    const { loadVisualQaEvidence } = await import("./core/external-evidence.js");
+    options.externalEvidence = [
+        await loadVisualQaEvidence({
+            reportPath: resolve(visualQaReport),
+            subjectBound: visualQaSubjectBound,
+        }),
+    ];
+}
 const receipt = await verifyRepository(options);
 const serialized = `${canonicalJson(receipt)}\n`;
 if (output === undefined)

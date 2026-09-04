@@ -17,11 +17,11 @@ The core does not import a harness SDK or a browser runtime. Existing `pi-verity
 
 Acceptance:
 
-- [ ] `visual-qa --help` exits 0 and invalid usage exits 2 with actionable text.
-- [ ] Reports are portable (`report.json`, `report.md`, self-contained `report.html`).
-- [ ] Package tarball excludes internal plans and runtime dependencies exclude dev-only Verity.
-- [ ] `npm run verify` passes.
-- [ ] Focused PR merged before Verity integration.
+- [x] `visual-qa --help` exits 0 and invalid usage exits 2 with actionable text.
+- [x] Reports are portable (`report.json`, `report.md`, self-contained `report.html`).
+- [x] Package tarball excludes internal plans and runtime dependencies exclude dev-only Verity.
+- [x] `npm run verify` passes.
+- [x] Focused PR merged before Verity integration.
 
 Checks:
 
@@ -36,11 +36,11 @@ git diff --check
 
 Acceptance:
 
-- [ ] `verity` is the canonical binary; `pi-verity` remains an alias.
-- [ ] `@pauleschwarz/pi-verity/adapters/pi` is canonical; `./adapter-pi` remains valid.
-- [ ] Current user-facing text says Verity; legacy IDs/package/URLs remain unchanged.
-- [ ] CLI doctor is host-neutral; `/verity doctor` reports the Pi adapter separately.
-- [ ] v3/v4 schemas and receipt semantics are unchanged.
+- [x] `verity` is the canonical binary; `pi-verity` remains an alias.
+- [x] `@pauleschwarz/pi-verity/adapters/pi` is canonical; `./adapter-pi` remains valid.
+- [x] Current user-facing text says Verity; legacy IDs/package/URLs remain unchanged.
+- [x] CLI doctor is host-neutral; `/verity doctor` reports the Pi adapter separately.
+- [x] v3/v4 schemas and receipt semantics are unchanged.
 
 Checks:
 

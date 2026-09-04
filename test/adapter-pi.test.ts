@@ -20,7 +20,7 @@ test("repair limit parser defaults to zero and bounds invalid values", () => {
 
 function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
   return {
-    schema_version: 4,
+    schema_version: 5,
     task_id: "task-1",
     session_id: "session-1",
     repository_root: "/repo",
@@ -73,6 +73,7 @@ function receipt(overrides: Partial<ProofReceipt> = {}): ProofReceipt {
       weakened: false,
     },
     effect_evidence: { claims: [] },
+    external_evidence: [],
     warnings: [],
     unverified_dimensions: [],
     verdict: "PASS",
