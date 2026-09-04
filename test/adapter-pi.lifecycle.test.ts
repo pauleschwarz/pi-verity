@@ -371,7 +371,7 @@ test("PASS does not trigger repair when repair is enabled", async () => {
     assert.equal(fake.entries.at(-1)?.verdict, "PASS");
     assert.equal(fake.messages.length, 0);
     assert.equal(fake.notices.length, 0);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · proven$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · proven$/);
   } finally {
     if (previousLimit === undefined) {
       Reflect.deleteProperty(process.env, "PI_VERITY_MAX_REPAIR_ATTEMPTS");
@@ -502,6 +502,7 @@ test("doctor command reports local readiness", async () => {
   try {
     await fake.commands.get("verity")?.("doctor", context);
     assert.match(fake.notices[0] ?? "", /Ready\./);
+    assert.match(fake.notices[0] ?? "", /✓ Pi adapter loaded/);
     assert.match(fake.notices[0] ?? "", /automatic repair: disabled/);
     assert.equal(fake.entries.length, 0);
 
@@ -535,7 +536,7 @@ test("overlapping explicit Verity runs are coalesced", async () => {
     await Promise.all([first, second]);
 
     assert.equal(fake.entries.length, 1);
-    assert.ok(fake.notices.includes("pi-verity: verification already running"));
+    assert.ok(fake.notices.includes("verity: verification already running"));
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));
@@ -798,24 +799,21 @@ test("status initializes, tracks mutations, and clears only on shutdown", async 
   try {
     await fake.events.get("session_start")?.({}, context);
     assert.equal(fake.statuses.at(-1)?.key, "pi-verity");
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
 
     await fake.events.get("tool_call")?.({ toolName: "read" }, context);
     await fake.events.get("agent_settled")?.({}, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
     assert.equal(fake.entries.length, 0);
     assert.equal(fake.notices.length, 0);
 
     await writeFile(join(root, "value.mjs"), "export const value = 2;\n");
     await fake.events.get("tool_call")?.({ toolName: "edit" }, context);
-    assert.match(
-      fake.statuses.at(-1)?.value ?? "",
-      /^pi-verity · change pending · edit$/,
-    );
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · change pending · edit$/);
 
     await fake.events.get("agent_settled")?.({}, context);
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · failed$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · failed$/);
     assert.ok(fake.notices.length >= 1);
     assert.match(fake.notices.at(-1) ?? "", /FAIL|failed|UNPROVEN|verity/i);
 
@@ -847,12 +845,12 @@ test("approval required is visible before confirm and recovers after allow or de
     assert.equal(allowResult, undefined);
     assert.ok(
       allowFake.statuses.some((status) =>
-        /^pi-verity · approval required · bash$/.test(status.value ?? ""),
+        /^verity · approval required · bash$/.test(status.value ?? ""),
       ),
     );
     assert.match(
       allowFake.statuses.at(-1)?.value ?? "",
-      /^pi-verity · change pending · bash$/,
+      /^verity · change pending · bash$/,
     );
 
     const denyFake = fakePi([false]);
@@ -870,10 +868,10 @@ test("approval required is visible before confirm and recovers after allow or de
     assert.equal(denyResult?.block, true);
     assert.ok(
       denyFake.statuses.some((status) =>
-        /^pi-verity · approval required · bash$/.test(status.value ?? ""),
+        /^verity · approval required · bash$/.test(status.value ?? ""),
       ),
     );
-    assert.match(denyFake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
+    assert.match(denyFake.statuses.at(-1)?.value ?? "", /^verity · blocked · bash$/);
   });
 });
 
@@ -888,32 +886,29 @@ test("explicit commands update status for missing receipt, invalid usage, and po
       await fake.commands.get("verity")?.("", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · unproven · no current receipt$/,
+        /^verity · unproven · no current receipt$/,
       );
 
       await fake.commands.get("verity")?.("why", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · unproven · no current receipt$/,
+        /^verity · unproven · no current receipt$/,
       );
 
       await fake.commands.get("verity")?.("receipt", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · unproven · no current receipt$/,
+        /^verity · unproven · no current receipt$/,
       );
 
       await fake.commands.get("verity")?.("wat", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · warning · invalid command$/,
+        /^verity · warning · invalid command$/,
       );
 
       await fake.commands.get("verity")?.("policy", context);
-      assert.match(
-        fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · observing · policy$/,
-      );
+      assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing · policy$/);
     } finally {
       await fake.events.get("session_shutdown")?.({}, context);
       await rm(root, { recursive: true, force: true });
@@ -929,7 +924,7 @@ test("explicit commands update status for missing receipt, invalid usage, and po
       await fake.commands.get("verity")?.("policy", context);
       assert.match(
         fake.statuses.at(-1)?.value ?? "",
-        /^pi-verity · failed · invalid policy$/,
+        /^verity · failed · invalid policy$/,
       );
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -951,15 +946,15 @@ test("blocked status resists lower-priority overwrite until recovery", async () 
       context,
     )) as { block?: boolean } | undefined;
     assert.equal(blocked?.block, true);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · blocked · bash$/);
 
     // No mutation observed → settled must not downgrade BLOCKED to UNPROVEN/OBSERVING.
     await fake.events.get("agent_settled")?.({}, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · blocked · bash$/);
 
     // Calm UI: a new prompt never demotes the visible state either.
     await fake.events.get("input")?.({ text: "continue" }, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · blocked · bash$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · blocked · bash$/);
   });
 });
 
@@ -976,7 +971,7 @@ test("outside a git repository verity stays silent", async () => {
     assert.equal(fake.entries.length, 0);
     assert.equal(fake.messages.length, 0);
     assert.equal(fake.notices.length, 0);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · observing$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · observing$/);
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);
     await rm(root, { recursive: true, force: true });
@@ -996,7 +991,7 @@ test("a prompt does not demote the last verdict", async () => {
     assert.equal(fake.entries.at(-1)?.verdict, "FAIL");
 
     await fake.events.get("input")?.({ text: "next task" }, context);
-    assert.match(fake.statuses.at(-1)?.value ?? "", /^pi-verity · failed$/);
+    assert.match(fake.statuses.at(-1)?.value ?? "", /^verity · failed$/);
   } finally {
     await fake.events.get("session_shutdown")?.({}, context);
     await cleanupReceipts(fake.entries.map((entry) => entry.receiptPath));

@@ -1,15 +1,28 @@
 # Getting started
 
-Install once, use Pi normally, inspect Verity only when you need detail.
+Install once, run the harness-neutral CLI from any agent, or add the Pi adapter
+for automatic turn verification.
 
-## Install
+## CLI (any harness)
+
+```bash
+npm install --save-dev github:pauleschwarz/pi-verity#v0.2.0
+npx verity doctor .
+npx verity verify . --output verity-receipt.json
+```
+
+The package is installed from the GitHub release tag. Verity is not published
+to npm yet. `pi-verity` remains a legacy binary alias.
+
+Doctor reports core availability, Git readiness, discovered checks, baseline
+availability, and isolated-workspace support. It does not call an LLM, open the
+network, or mutate the repository.
+
+## Pi adapter (automatic)
 
 ```bash
 pi install git:github.com/pauleschwarz/pi-verity@v0.2.0
 ```
-
-The package is installed from the GitHub release tag. Pi Verity is not
-published to npm.
 
 Inside a Git repository:
 
@@ -17,10 +30,8 @@ Inside a Git repository:
 # Existing behavior; execution policy is off by default.
 pi
 
-# Gate side-effect-capable and unknown agent tools.
+# Optional adapter-specific pre-tool approval.
 PI_VERITY_EXECUTION_POLICY=mutating pi
-
-# Require approval for every agent tool call.
 PI_VERITY_EXECUTION_POLICY=all pi
 ```
 
@@ -28,17 +39,15 @@ PI_VERITY_EXECUTION_POLICY=all pi
 /verity doctor
 ```
 
-Doctor reports extension load, Git readiness, the discovered ecosystem and
-check, baseline availability, and whether automatic repair is enabled. It does
-not call an LLM, open the network, or mutate the repository.
+The Pi doctor output adds adapter, repair, and execution-policy readiness.
 
 ## Work normally
 
-No Verity prompt is required. Before an agent turn, the Pi adapter captures the
-repository state. If the turn uses a repository-changing tool, Verity checks
-the resulting patch after the agent settles. Read-only turns do not create
-receipts. A successful automatic run is concise; problems include the next
-useful command.
+With the Pi adapter, no Verity prompt is required. Before an agent turn, the
+adapter captures repository state. If the turn uses a repository-changing tool,
+Verity checks the resulting patch after the agent settles. Read-only turns do
+not create receipts. A successful automatic run is concise; problems include
+the next useful command.
 
 ## Read a result
 
@@ -78,14 +87,14 @@ pretend a missing import or symbol is a useful regression failure.
 The optional CLI uses the same core:
 
 ```bash
-pi-verity doctor .
-pi-verity verify . --output proof-receipt.json
+verity doctor .
+verity verify . --output proof-receipt.json
 ```
 
 CLI options:
 
 ```text
-pi-verity verify [repository]
+verity verify [repository]
   [--output FILE]
   [--timeout-ms N]
   [--max-output-bytes N]

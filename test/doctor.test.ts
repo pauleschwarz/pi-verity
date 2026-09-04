@@ -22,7 +22,11 @@ test("doctor reports a ready Git repository without network or LLM dependencies"
     report.checks.find((item) => item.label === "not inside a Git repository")?.status,
     "ERROR",
   );
-  assert.match(formatDoctorReport(report), /ERROR not inside a Git repository/);
+  const formatted = formatDoctorReport(report);
+  assert.match(formatted, /^Verity 0\.2\.0/m);
+  assert.match(formatted, /✓ verification core available/);
+  assert.doesNotMatch(formatted, /extension loaded/);
+  assert.match(formatted, /ERROR not inside a Git repository/);
 });
 
 test("doctor warns when typecheck is unavailable", async () => {

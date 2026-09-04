@@ -4,6 +4,33 @@ All notable changes are documented here. The project follows Semantic Versioning
 
 ## Unreleased
 
+### Added
+
+- Canonical `verity` binary alongside the legacy `pi-verity` alias.
+- Canonical Pi adapter export path `@pauleschwarz/pi-verity/adapters/pi`; the
+  legacy `./adapter-pi` export stays valid.
+- `verity --help`, `verity --version`, and a host-neutral usage text; bare
+  invocation now prints help and exits `0` instead of failing.
+- `docs/HARNESS_INTEGRATION.md` documenting the subprocess/core contract for
+  non-Pi harnesses.
+- `test/migration-contract.test.ts` pinning the alias, adapter export, and
+  legacy persistence identifiers.
+
+### Changed
+
+- The visible product is **Verity**; user-facing CLI, doctor, and Pi UI text no
+  longer says "pi-verity".
+- Doctor reports `verification core available` instead of `extension loaded`;
+  `/verity doctor` additionally reports the loaded Pi adapter.
+- README and docs lead with the harness-neutral CLI, with Pi as an optional
+  adapter.
+
+### Compatibility
+
+- Unchanged: npm package name, repository URL, receipt schemas v3/v4 and URNs,
+  saved receipt paths, `pi-verity*` Pi status/session identifiers, and the
+  `PI_VERITY_*` environment variables.
+
 ## [0.2.0] - 2026-08-31
 
 ### Added
