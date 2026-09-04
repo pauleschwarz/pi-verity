@@ -75,10 +75,10 @@
   "license": "MIT",
   "packageManager": "npm@10.9.8",
   "devDependencies": {
-    "@biomejs/biome": "2.5.10",
+    "@biomejs/biome": "2.5.11",
     "@types/node": "^26.4.0",
-    "tsx": "^4.20.0",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "smol-toml": "^1.8.0"
