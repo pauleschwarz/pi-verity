@@ -1,7 +1,7 @@
 {
   "name": "@pauleschwarz/pi-verity",
   "version": "0.2.0",
-  "description": "A lightweight execution and evidence gate for coding agents.",
+  "description": "Deterministic proof-of-done for coding-agent patches.",
   "type": "module",
   "author": "Paul Schwarz",
   "repository": {
@@ -17,10 +17,12 @@
     "provenance": true
   },
   "bin": {
+    "verity": "dist/cli.js",
     "pi-verity": "dist/cli.js"
   },
   "exports": {
     ".": "./dist/core/index.js",
+    "./adapters/pi": "./dist/adapter-pi/index.js",
     "./adapter-pi": "./dist/adapter-pi/index.js"
   },
   "pi": {
@@ -32,12 +34,14 @@
     "dist",
     "schemas",
     "docs/GETTING_STARTED.md",
+    "docs/HARNESS_INTEGRATION.md",
     "docs/HOW_IT_WORKS.md",
     "docs/LIMITATIONS.md",
     "docs/evidence",
     "examples/README.md",
     "scripts/prepare.mjs",
     "README.md",
+    "CONTRIBUTING.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
