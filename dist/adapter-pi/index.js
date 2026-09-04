@@ -57,7 +57,7 @@ export function renderVerityStatus(state, theme) {
     const label = detail === undefined || detail.length === 0
         ? VERITY_STATE_LABEL[state.kind]
         : `${VERITY_STATE_LABEL[state.kind]} · ${detail.slice(0, 120)}`;
-    const prefix = theme === undefined ? "pi-verity" : theme.fg("dim", "pi-verity");
+    const prefix = theme === undefined ? "verity" : theme.fg("dim", "verity");
     const value = theme === undefined ? label : theme.fg(VERITY_STATE_COLOR[state.kind], label);
     return `${prefix} · ${value}`;
 }
@@ -173,7 +173,7 @@ export function formatReceiptSummary(receipt, diff) {
     return `${head}${body}\n/verity why`;
 }
 export function explainReceipt(receipt) {
-    const lines = [`pi-verity ${receipt.verdict}`];
+    const lines = [`verity ${receipt.verdict}`];
     if (receipt.verification_commands.length === 0) {
         lines.push("check · unavailable · no supported safe verification command was selected");
     }
@@ -234,7 +234,7 @@ export function receiptMatchesState(receipt, current) {
 }
 function receiptUiState(receipt) {
     // Detail-free labels: the footer renders every extension status on one
-    // shared line, so pi-verity keeps the shortest text that stays unambiguous.
+    // shared line, so Verity keeps the shortest text that stays unambiguous.
     if (receipt.verdict === "FAIL")
         return { kind: "FAILED" };
     if (receipt.verdict === "UNPROVEN")
@@ -244,7 +244,7 @@ function receiptUiState(receipt) {
     return { kind: "PROVEN" };
 }
 export function minimalFailureEvidence(receipt) {
-    const lines = ["pi-verity deterministic failure:"];
+    const lines = ["verity deterministic failure:"];
     const failedCommand = receipt.verification_commands.find((result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled);
     if (failedCommand !== undefined) {
         lines.push(`${commandLabel(failedCommand)} · ${commandOutcome(failedCommand)}`);
@@ -749,7 +749,7 @@ class PiVerityRuntime {
         }
         if (this.verificationInProgress) {
             if (announce) {
-                context.ui?.notify?.("pi-verity: verification already running", "info");
+                context.ui?.notify?.("verity: verification already running", "info");
             }
             return undefined;
         }
@@ -794,7 +794,7 @@ class PiVerityRuntime {
         catch (error) {
             const detail = error instanceof Error ? error.message : String(error);
             this.updateStatus(context, { kind: "FAILED", detail }, true);
-            context.ui?.notify?.(`pi-verity could not verify: ${detail}`, "error");
+            context.ui?.notify?.(`verity could not verify: ${detail}`, "error");
             return undefined;
         }
         finally {
@@ -865,7 +865,7 @@ class PiVerityRuntime {
         const policyLine = this.policyWhyLine();
         if (this.lastReceipt === undefined) {
             this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.(["pi-verity: no current receipt · run /verity run", policyLine]
+            context.ui?.notify?.(["verity: no current receipt · run /verity run", policyLine]
                 .filter((line) => line !== undefined)
                 .join("\n"), "warning");
             return;
@@ -881,20 +881,20 @@ class PiVerityRuntime {
     notifyReceipt(context) {
         if (this.lastReceipt === undefined || this.lastReceiptPath === undefined) {
             this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.("pi-verity: no current receipt · run /verity run", "warning");
+            context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
             return;
         }
-        context.ui?.notify?.(`pi-verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`, "info");
+        context.ui?.notify?.(`verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`, "info");
     }
     notifyCurrent(context, stale) {
         if (this.lastReceipt === undefined) {
             this.updateStatus(context, { kind: "UNPROVEN", detail: "no current receipt" }, true);
-            context.ui?.notify?.("pi-verity: no current receipt · run /verity run", "warning");
+            context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
             return;
         }
         if (stale) {
             this.updateStatus(context, { kind: "CHANGE_PENDING", detail: "repository changed" }, true);
-            context.ui?.notify?.("pi-verity ⚠ STALE · repository changed · /verity run", "warning");
+            context.ui?.notify?.("verity ⚠ STALE · repository changed · /verity run", "warning");
             return;
         }
         this.updateStatus(context, receiptUiState(this.lastReceipt), true);
@@ -921,10 +921,10 @@ class PiVerityRuntime {
         if (subcommand === "doctor") {
             try {
                 const report = await runDoctor(context.cwd ?? process.cwd());
-                context.ui?.notify?.(`${formatDoctorReport(report)}\n${repairStatus()}\n${this.formatPolicyDoctor()}`, report.ready && this.executionPolicy.valid ? "info" : "error");
+                context.ui?.notify?.(`${formatDoctorReport(report)}\n✓ Pi adapter loaded\n${repairStatus()}\n${this.formatPolicyDoctor()}`, report.ready && this.executionPolicy.valid ? "info" : "error");
             }
             catch (error) {
-                context.ui?.notify?.(`pi-verity doctor failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+                context.ui?.notify?.(`verity doctor failed: ${error instanceof Error ? error.message : String(error)}`, "error");
             }
             return;
         }

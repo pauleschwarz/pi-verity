@@ -121,7 +121,7 @@ export function renderVerityStatus(state: VerityUiState, theme?: VerityTheme): s
     detail === undefined || detail.length === 0
       ? VERITY_STATE_LABEL[state.kind]
       : `${VERITY_STATE_LABEL[state.kind]} · ${detail.slice(0, 120)}`;
-  const prefix = theme === undefined ? "pi-verity" : theme.fg("dim", "pi-verity");
+  const prefix = theme === undefined ? "verity" : theme.fg("dim", "verity");
   const value =
     theme === undefined ? label : theme.fg(VERITY_STATE_COLOR[state.kind], label);
   return `${prefix} · ${value}`;
@@ -360,7 +360,7 @@ export function formatReceiptSummary(
 }
 
 export function explainReceipt(receipt: ProofReceipt): string {
-  const lines = [`pi-verity ${receipt.verdict}`];
+  const lines = [`verity ${receipt.verdict}`];
   if (receipt.verification_commands.length === 0) {
     lines.push(
       "check · unavailable · no supported safe verification command was selected",
@@ -437,7 +437,7 @@ export function receiptMatchesState(
 
 function receiptUiState(receipt: ProofReceipt): VerityUiState {
   // Detail-free labels: the footer renders every extension status on one
-  // shared line, so pi-verity keeps the shortest text that stays unambiguous.
+  // shared line, so Verity keeps the shortest text that stays unambiguous.
   if (receipt.verdict === "FAIL") return { kind: "FAILED" };
   if (receipt.verdict === "UNPROVEN") return { kind: "UNPROVEN" };
   if (receipt.verdict === "PASS_WITH_WARNINGS") return { kind: "WARNING" };
@@ -445,7 +445,7 @@ function receiptUiState(receipt: ProofReceipt): VerityUiState {
 }
 
 export function minimalFailureEvidence(receipt: ProofReceipt): string {
-  const lines = ["pi-verity deterministic failure:"];
+  const lines = ["verity deterministic failure:"];
   const failedCommand = receipt.verification_commands.find(
     (result) => result.exit_code !== 0 && !result.timed_out && !result.cancelled,
   );
@@ -1029,7 +1029,7 @@ class PiVerityRuntime {
     }
     if (this.verificationInProgress) {
       if (announce) {
-        context.ui?.notify?.("pi-verity: verification already running", "info");
+        context.ui?.notify?.("verity: verification already running", "info");
       }
       return undefined;
     }
@@ -1076,7 +1076,7 @@ class PiVerityRuntime {
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       this.updateStatus(context, { kind: "FAILED", detail }, true);
-      context.ui?.notify?.(`pi-verity could not verify: ${detail}`, "error");
+      context.ui?.notify?.(`verity could not verify: ${detail}`, "error");
       return undefined;
     } finally {
       await capturedWorkspace?.cleanup();
@@ -1151,7 +1151,7 @@ class PiVerityRuntime {
         true,
       );
       context.ui?.notify?.(
-        ["pi-verity: no current receipt · run /verity run", policyLine]
+        ["verity: no current receipt · run /verity run", policyLine]
           .filter((line) => line !== undefined)
           .join("\n"),
         "warning",
@@ -1181,14 +1181,11 @@ class PiVerityRuntime {
         { kind: "UNPROVEN", detail: "no current receipt" },
         true,
       );
-      context.ui?.notify?.(
-        "pi-verity: no current receipt · run /verity run",
-        "warning",
-      );
+      context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
       return;
     }
     context.ui?.notify?.(
-      `pi-verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`,
+      `verity receipt · ${this.lastReceiptPath}\n${canonicalJson(this.lastReceipt)}`,
       "info",
     );
   }
@@ -1200,10 +1197,7 @@ class PiVerityRuntime {
         { kind: "UNPROVEN", detail: "no current receipt" },
         true,
       );
-      context.ui?.notify?.(
-        "pi-verity: no current receipt · run /verity run",
-        "warning",
-      );
+      context.ui?.notify?.("verity: no current receipt · run /verity run", "warning");
       return;
     }
     if (stale) {
@@ -1213,7 +1207,7 @@ class PiVerityRuntime {
         true,
       );
       context.ui?.notify?.(
-        "pi-verity ⚠ STALE · repository changed · /verity run",
+        "verity ⚠ STALE · repository changed · /verity run",
         "warning",
       );
       return;
@@ -1254,12 +1248,12 @@ class PiVerityRuntime {
       try {
         const report = await runDoctor(context.cwd ?? process.cwd());
         context.ui?.notify?.(
-          `${formatDoctorReport(report)}\n${repairStatus()}\n${this.formatPolicyDoctor()}`,
+          `${formatDoctorReport(report)}\n✓ Pi adapter loaded\n${repairStatus()}\n${this.formatPolicyDoctor()}`,
           report.ready && this.executionPolicy.valid ? "info" : "error",
         );
       } catch (error) {
         context.ui?.notify?.(
-          `pi-verity doctor failed: ${error instanceof Error ? error.message : String(error)}`,
+          `verity doctor failed: ${error instanceof Error ? error.message : String(error)}`,
           "error",
         );
       }

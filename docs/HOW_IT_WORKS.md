@@ -1,6 +1,6 @@
-# How Pi Verity works
+# How Verity works
 
-Pi Verity is a deterministic execution gate. The agent may create the patch,
+Verity is a deterministic execution gate. The agent may create the patch,
 but the verifier derives its verdict from repository state and command results,
 not from the agent's completion message or another model's opinion.
 
@@ -150,7 +150,7 @@ complete.
 ### New functionality
 
 For a new API such as `exportCsv()`, the baseline may have no module, export, or
-symbol that the candidate test imports. Pi Verity recognizes deterministic
+symbol that the candidate test imports. Verity recognizes deterministic
 missing-module/import/export/symbol diagnostics as structural baseline failures
 and records `TEST_NOT_PORTABLE` instead of fake RED evidence.
 

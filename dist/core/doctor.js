@@ -58,7 +58,7 @@ async function packageScripts(root, manager) {
 async function workspaceSupported() {
     let parent;
     try {
-        parent = await mkdtemp(join(tmpdir(), "pi-verity-doctor-"));
+        parent = await mkdtemp(join(tmpdir(), "verity-doctor-"));
         return check("OK", "isolated counterfactual workspace supported");
     }
     catch (error) {
@@ -77,7 +77,7 @@ async function workspaceSupported() {
  */
 export async function runDoctor(cwd) {
     const checks = [
-        check("OK", "extension loaded", `pi-verity ${VERSION}`),
+        check("OK", "verification core available", `Verity ${VERSION}`),
     ];
     let root = null;
     try {
@@ -124,7 +124,7 @@ const MARKER = {
     ERROR: "ERROR",
 };
 export function formatDoctorReport(report) {
-    const lines = [`Pi Verity ${report.version}`, ""];
+    const lines = [`Verity ${report.version}`, ""];
     for (const item of report.checks) {
         const detail = item.detail === null || item.status === "OK" ? "" : ` · ${item.detail}`;
         lines.push(`${MARKER[item.status]} ${item.label}${detail}`);

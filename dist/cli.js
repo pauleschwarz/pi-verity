@@ -4,12 +4,29 @@ import { resolve } from "node:path";
 import { formatDoctorReport, runDoctor } from "./core/doctor.js";
 import { canonicalJson } from "./core/hash.js";
 import { verifyRepository } from "./core/verifier.js";
-function usage() {
-    process.stderr.write("Usage: pi-verity verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N] | doctor [repository]\n");
+function usage(error) {
+    const text = "Usage:\n" +
+        "  verity verify [repository] [--output receipt.json] [--timeout-ms N] [--max-output-bytes N]\n" +
+        "  verity doctor [repository]\n" +
+        "  verity --version\n\n" +
+        "Legacy alias: pi-verity\n";
+    if (error === undefined) {
+        process.stdout.write(text);
+        process.exit(0);
+    }
+    process.stderr.write(`Verity: ${error}\n\n${text}`);
     process.exit(2);
 }
 const args = process.argv.slice(2);
 const subcommand = args.shift();
+if (subcommand === undefined || subcommand === "help" || subcommand === "--help") {
+    usage();
+}
+if (subcommand === "--version" || subcommand === "-v") {
+    const { VERSION } = await import("./core/doctor.js");
+    process.stdout.write(`${VERSION}\n`);
+    process.exit(0);
+}
 if (subcommand === "doctor") {
     const repository = args.shift();
     if (args.length > 0)
@@ -19,7 +36,7 @@ if (subcommand === "doctor") {
     process.exit(report.ready ? 0 : 1);
 }
 if (subcommand !== "verify")
-    usage();
+    usage(`unknown command: ${subcommand}`);
 let cwd = process.cwd();
 let output;
 let timeoutMs;
@@ -60,7 +77,7 @@ else
         encoding: "utf8",
         mode: 0o600,
     });
-process.stderr.write(`pi-verity: ${receipt.verdict}\n`);
+process.stderr.write(`verity: ${receipt.verdict}\n`);
 if (receipt.verdict === "PASS" || receipt.verdict === "PASS_WITH_WARNINGS")
     process.exitCode = 0;
 else if (receipt.verdict === "FAIL")
