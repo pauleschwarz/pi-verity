@@ -7,15 +7,21 @@
 [![Release](https://img.shields.io/github/v/release/pauleschwarz/pi-verity?label=release)](https://github.com/pauleschwarz/pi-verity/releases)
 
 A coding agent can write the patch, the test, and the "tests pass" conclusion.
-Verity checks whether the repository evidence actually supports that conclusion.
+Verity checks whether the repository evidence is structurally sound,
+counterfactually discriminative, and bound to the repository state it claims
+to describe.
 
 It does not ask another model to grade the work. It runs deterministic checks,
 compares candidate tests against the pre-change code when an exact baseline is
 available, detects weakened evidence, and writes a receipt bound to the final
 repository state.
 
+**Limits, stated plainly:** Verity is structural, not semantic. It catches
+fabricated, stale, weakened, or non-discriminating evidence — it cannot judge
+whether the change does what the task *meant*. Product intent stays your call.
+
 ```text
-agent patch → repository evidence → PASS | WARN | UNPROVEN | FAIL → receipt
+agent patch → repository evidence → PASS | PASS_WITH_WARNINGS | UNPROVEN | FAIL → receipt
 ```
 
 ## Start here
